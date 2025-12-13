@@ -26,7 +26,7 @@ export default function Home() {
   const [streak, setStreak] = useState(0)
   const [todayWatched, setTodayWatched] = useState(false)
   const [activeChannel, setActiveChannel] = useState<string | null>(null)
-  const [filterType, setFilterType] = useState<FilterType>('all')
+  const [filterType, setFilterType] = useState<FilterType>('unwatched')
   const [emblemModalOpen, setEmblemModalOpen] = useState(false)
   const [earnedEmblems, setEarnedEmblems] = useState<string[]>([])
   const [currentWeekEmblem, setCurrentWeekEmblem] = useState<string>('/img_bonus/BONUS.jpg')
@@ -297,29 +297,42 @@ export default function Home() {
   // Loading/Auth check
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#74c74a] border-t-transparent"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20 font-sans">
+    <div className="min-h-screen pb-20 font-sans">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            📚 자기주도 학습관리
-          </h1>
+      <header
+        className="sticky top-0 z-40 shadow-xl"
+        style={{
+          backgroundImage: "url('/assets/theme/wood_texture_dark.png')",
+          backgroundSize: '300px',
+          borderBottom: '4px solid #5d4037'
+        }}
+      >
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 h-auto md:h-20 py-4 md:py-0 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-amber-400 p-[2px] rounded-full border-4 border-white shadow-lg overflow-hidden w-16 h-16 relative -ml-2">
+              <img src="/assets/theme/teacher_avatar.jpg" className="w-full h-full object-cover rounded-full" alt="Teacher Avatar" />
+            </div>
+            <h1 className="text-xl md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" style={{ textShadow: '2px 2px 0 #5d4037' }}>
+              형석쌤 공부용 사이트
+            </h1>
+          </div>
+
           <div className="flex items-center gap-3 text-sm">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${streak > 0 ? 'bg-gradient-to-r from-orange-400 to-red-400 text-white shadow-lg shadow-orange-200' : 'bg-gray-100 text-gray-400'}`}>
-              <Flame size={16} className={streak > 0 ? "fill-white" : ""} />
-              <span className="font-bold">{streak}</span>
-              <span className="hidden sm:inline text-xs opacity-90">일 연속</span>
+            <div className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
+              <Flame size={18} className={streak > 0 ? "fill-orange-500 text-orange-500" : ""} />
+              <span className="font-extrabold text-base">{streak}</span>
+              <span className="hidden sm:inline text-xs font-bold">일 연속</span>
             </div>
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-4 py-2 rounded-2xl transition-all cursor-pointer shadow-md"
             >
               {hasWeeklyEmblem(streak) && (
                 <div className="relative">
@@ -333,8 +346,8 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              <UserCircle size={18} />
-              <span className="font-medium hidden sm:inline">{user.username}</span>
+              <UserCircle size={20} className="text-amber-500" />
+              <span className="font-bold text-sm">{user.username}</span>
             </button>
             <Link
               href="/change-password"
@@ -359,53 +372,66 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`p-3 rounded-xl ${todayWatched ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-              <CalendarCheck size={24} />
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Today's Learning Card */}
+          <div className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-4 bg-[#e6dcc8]/30"></div>
+            <div className="p-5 flex items-center gap-5">
+              <div className={`p-4 rounded-2xl shadow-inner ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                <CalendarCheck size={28} strokeWidth={2.5} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#8b5e3c] mb-1 opacity-70">오늘의 학습</p>
+                <p className={`text-xl font-black ${todayWatched ? 'text-emerald-600' : 'text-slate-400'}`}>{todayWatched ? '완료함!' : '아직 안함'}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">오늘의 학습</p>
-              <p className="font-bold text-gray-800">{todayWatched ? '✅ 완료!' : '⏳ 시작 전'}</p>
-            </div>
+            {todayWatched && <div className="absolute -bottom-2 -right-2 opacity-20 rotate-12"><img src="/assets/theme/leaf_icon_green.png" className="w-24 h-24" /></div>}
           </div>
           <button
             onClick={() => setEmblemModalOpen(true)}
-            className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-amber-200 transition-all cursor-pointer w-full text-left"
+            className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden group hover:translate-y-1 hover:shadow-[0_4px_0_rgba(214,204,184,1)] transition-all cursor-pointer w-full text-left"
           >
-            <div className={`w-12 h-12 rounded-xl overflow-hidden ${streak >= 7 ? '' : 'grayscale opacity-60'}`}>
-              <img
-                src={currentWeekEmblem}
-                alt="Weekly Emblem"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs text-gray-400 mb-0.5">이번 주 엠블럼</p>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                    <div
-                      key={i}
-                      className={`w-2 h-2 rounded-full ${i <= Math.min(streak, 7) ? 'bg-green-500' : 'bg-gray-200'}`}
-                    />
-                  ))}
+            <div className="p-5 flex items-center gap-4 relative z-10">
+              <div className={`w-14 h-14 rounded-2xl overflow-hidden shadow-md border-2 border-white ${streak >= 7 ? 'ring-2 ring-amber-400' : 'grayscale opacity-60'}`}>
+                <img
+                  src={currentWeekEmblem}
+                  alt="Weekly Emblem"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-gray-400 mb-0.5">이번 주 엠블럼</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                      <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${i <= Math.min(streak, 7) ? 'bg-green-500' : 'bg-gray-200'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-gray-600">{Math.min(streak, 7)}/7</span>
                 </div>
-                <span className="text-xs font-medium text-gray-600">{Math.min(streak, 7)}/7</span>
               </div>
             </div>
           </button>
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-5 rounded-2xl shadow-lg text-white">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={18} className="opacity-80" />
-              <p className="text-xs opacity-80">총 시청 횟수</p>
+          <div className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden">
+            <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-amber-50 to-transparent"></div>
+            <div className="p-5 flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <img src="/assets/theme/bell_bag_icon.png" className="w-5 h-5" />
+                  <p className="text-sm font-bold text-[#8b5e3c] opacity-70">총 시청 횟수</p>
+                </div>
+                <p className="text-3xl font-black text-[#5d4037]">
+                  {videos.reduce((acc, curr) => acc + curr.watch_count, 0)}
+                  <span className="text-lg font-bold opacity-60 ml-1">회</span>
+                </p>
+              </div>
+              <img src="/assets/theme/bell_bag_icon.png" className="w-16 h-16 opacity-20 absolute -right-2 -bottom-2 rotate-12" />
             </div>
-            <p className="text-3xl font-bold">
-              {videos.reduce((acc, curr) => acc + curr.watch_count, 0)}
-              <span className="text-sm font-normal opacity-70 ml-1">회</span>
-            </p>
           </div>
         </section>
 
@@ -416,8 +442,8 @@ export default function Home() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
-            <div className="border-b border-gray-100 overflow-x-auto">
-              <div className="flex">
+            <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-4 mt-6">
+              <div className="flex px-4 pt-4 gap-2">
                 {channelNames.map((channelName) => {
                   const channelVideos = channelData[channelName]
                   const watched = channelVideos.filter(v => v.watch_count > 0).length
@@ -427,20 +453,18 @@ export default function Home() {
                   return (
                     <div
                       key={channelName}
-                      className={`relative group flex items-center ${isActive
-                        ? 'border-b-2 border-blue-500 bg-blue-50/50'
-                        : 'border-b-2 border-transparent hover:bg-gray-50'
-                        }`}
+                      className="relative group"
                     >
                       <button
                         onClick={() => setActiveChannel(channelName)}
-                        className={`px-5 py-4 text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2 ${isActive
-                          ? 'text-blue-600'
-                          : 'text-gray-500 hover:text-gray-700'
+                        className={`px-6 py-3 text-sm font-black rounded-t-2xl transition-all flex items-center gap-2 border-t-4 border-x-4 ${isActive
+                          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[4px]'
+                          : 'bg-[#fffaeb] border-transparent text-[#9c826b] hover:bg-[#fff0c7]'
                           }`}
+                        style={isActive ? { backgroundImage: "url('/assets/theme/wood_texture_light.png')", backgroundSize: '150px' } : {}}
                       >
-                        <span className="max-w-[120px] truncate">{channelName}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className="max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
                           {watched}/{total}
                         </span>
                       </button>
@@ -449,10 +473,10 @@ export default function Home() {
                           e.stopPropagation()
                           handleDeleteChannel(channelName)
                         }}
-                        className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 mr-2"
+                        className="absolute -top-2 -right-2 bg-red-400 text-white p-1 rounded-full shadow-md hover:bg-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
                         title="채널 삭제"
                       >
-                        <X size={14} />
+                        <X size={12} strokeWidth={3} />
                       </button>
                     </div>
                   )
@@ -461,51 +485,57 @@ export default function Home() {
             </div>
           )}
 
-          {/* Progress Bar */}
+          {/* Progress Bar & Filters */}
           {activeChannel && totalInChannel > 0 && (
-            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-              {/* Filter Buttons */}
-              <div className="flex items-center gap-2 mb-3">
-                <Filter size={14} className="text-gray-400" />
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setFilterType('all')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${filterType === 'all'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                  >
-                    전체 ({totalInChannel})
-                  </button>
-                  <button
-                    onClick={() => setFilterType('unwatched')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${filterType === 'unwatched'
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                  >
-                    미시청 ({totalInChannel - watchedInChannel})
-                  </button>
-                  <button
-                    onClick={() => setFilterType('watched')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${filterType === 'watched'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                  >
-                    시청 완료 ({watchedInChannel})
-                  </button>
+            <div className="mx-4 bg-[#fdfbf7] border-x-4 border-b-4 border-[#e6dcc8] rounded-b-[2rem] p-6 mb-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                {/* Filter Buttons */}
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#e6dcc8] p-1.5 rounded-full text-[#8b5e3c]">
+                    <Filter size={16} />
+                  </div>
+                  <div className="flex bg-[#e6dcc8]/30 p-1 rounded-full">
+                    <button
+                      onClick={() => setFilterType('all')}
+                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'all'
+                        ? 'bg-[#74c74a] text-white shadow-md'
+                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                        }`}
+                    >
+                      전체 ({totalInChannel})
+                    </button>
+                    <button
+                      onClick={() => setFilterType('unwatched')}
+                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'unwatched'
+                        ? 'bg-orange-400 text-white shadow-md'
+                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                        }`}
+                    >
+                      미시청 ({totalInChannel - watchedInChannel})
+                    </button>
+                    <button
+                      onClick={() => setFilterType('watched')}
+                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'watched'
+                        ? 'bg-[#74c74a] text-white shadow-md'
+                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                        }`}
+                    >
+                      시청 완료 ({watchedInChannel})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress Text */}
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#8b5e3c] mr-2">진행률</span>
+                  <span className="text-lg font-black text-[#74c74a]">{progressPercent}%</span>
                 </div>
               </div>
 
-              {/* Progress */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">학습 진행률</span>
-                <span className="text-sm font-bold text-blue-600">{watchedInChannel} / {totalInChannel} ({progressPercent}%)</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              {/* Progress Bar */}
+              <div className="h-5 bg-[#e6dcc8] rounded-full overflow-hidden p-1 shadow-inner">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-[repeating-linear-gradient(45deg,#74c74a,#74c74a_10px,#68b642_10px,#68b642_20px)] rounded-full transition-all duration-500 ease-out border-2 border-[#86c95c]"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -513,7 +543,7 @@ export default function Home() {
           )}
 
           {/* Video Grid */}
-          <div className="p-5">
+          <div className="px-4 pb-8">
             {loading ? (
               <div className="py-16 text-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-3"></div>
@@ -532,7 +562,7 @@ export default function Home() {
                     '이 채널에 영상이 없습니다.'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
                 {filteredAndSortedVideos.map(video => (
                   <VideoCard
                     key={video.id}

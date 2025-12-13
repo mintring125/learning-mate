@@ -1,31 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc; /* Slate 50 */
-  --foreground: #0f172a; /* Slate 900 */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --wood-light: #e8d0a9;
+  --wood-dark: #8b5e3c;
+  --leaf-green: #74c74a;
 }
 
-/* @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-} */
-
-/* Use simple tailwind directives/layers if v4 or standard v3. 
-   If v4, the above is correct. If v3, we need @tailwind base; etc. 
-   Assuming create-next-app installed v4 compatible postcss or v3. 
-   Let's stick to standard v3-like behavior but keep the variable mapping if the setup allows.
-   Actually, safely, let's just keep the imports and remove the body override.
-*/
-
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-varela-round), sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
+  background-color: #262626;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }

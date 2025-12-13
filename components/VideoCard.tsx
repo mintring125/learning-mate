@@ -35,52 +35,57 @@ export default function VideoCard({ video, onToggleWatch, onQuiz, onPlay }: Vide
   return (
     <div
       onClick={() => onPlay(video)}
-      className={`bg-white rounded-xl border shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col h-full cursor-pointer group ${isWatched ? 'border-green-200 bg-green-50/30' : 'border-gray-200'
+      className={`relative bg-white rounded-[2rem] border-4 shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:translate-y-1 hover:shadow-[0_3px_0_rgba(0,0,0,0.1)] transition-all overflow-hidden flex flex-col h-full cursor-pointer group ${isWatched
+        ? 'border-[#74c74a] shadow-[0_6px_0_#589e36] bg-emerald-50'
+        : 'border-[#e6dcc8] shadow-[0_6px_0_#d4c5a9]'
         }`}
     >
       {/* Thumbnail */}
-      <div className="relative h-36 bg-gray-100">
+      <div className="relative h-40 bg-[#f0ede6] m-2 rounded-[1.5rem] overflow-hidden border-2 border-[#e6dcc8]">
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}
             alt={video.title}
-            className={`w-full h-full object-cover ${isWatched ? 'opacity-80' : ''}`}
+            className={`w-full h-full object-cover ${isWatched ? 'opacity-80 grayscale-[30%]' : ''}`}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-300">
+          <div className="flex items-center justify-center h-full text-[#d4c5a9]">
             <Youtube size={40} />
           </div>
         )}
 
         {/* NEW Badge */}
         {isNew && (
-          <div className="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white flex items-center gap-1 animate-pulse">
-            <Sparkles size={10} />
+          <div className="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white flex items-center gap-1 animate-bounce shadow-md border-2 border-white">
+            <Sparkles size={12} className="fill-white" />
             NEW
           </div>
         )}
 
         {/* Watch status badge */}
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${isWatched ? 'bg-green-500 text-white' : 'bg-gray-800/70 text-white'
+        <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold border-2 border-white shadow-md flex items-center gap-1 ${isWatched ? 'bg-[#74c74a] text-white' : 'bg-slate-800/80 text-white'
           }`}>
-          {isWatched ? '✓ 시청완료' : '미시청'}
+          {isWatched ? <CheckCircle2 size={12} className="stroke-[3]" /> : null}
+          {isWatched ? '완료!' : '미시청'}
         </div>
 
         {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <Play className="text-white drop-shadow-lg fill-white" size={44} />
+        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="bg-white/90 p-3 rounded-full shadow-lg transform scale-0 group-hover:scale-110 transition-transform duration-300">
+            <Play className="text-[#74c74a] fill-[#74c74a] translate-x-0.5" size={28} />
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-semibold text-gray-800 line-clamp-2 text-sm mb-3" title={video.title}>
+      <div className="px-5 pb-5 pt-2 flex-1 flex flex-col">
+        <h3 className="font-bold text-[#5d4037] line-clamp-2 text-sm mb-4 leading-relaxed" title={video.title}>
           {video.title}
         </h3>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-          <span>{isWatched ? '시청 완료' : '아직 시청하지 않음'}</span>
+        <div className="flex items-center justify-between text-xs font-bold text-[#9c826b] mb-4 bg-[#fdfbf7] p-2 rounded-lg border border-[#e6dcc8]">
+          <span>{isWatched ? '🌿 시청 완료' : '🍂 시청 전'}</span>
           <span>
             {video.last_watched_at
               ? new Date(video.last_watched_at).toLocaleDateString('ko-KR')
@@ -93,38 +98,38 @@ export default function VideoCard({ video, onToggleWatch, onQuiz, onPlay }: Vide
           <button
             onClick={handleToggle}
             disabled={loading}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg font-medium transition-all text-xs ${isWatched
-              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
+              ? 'bg-[#e2f2da] text-[#589e36] border-[#589e36] hover:bg-[#d4edc9]'
+              : 'bg-white text-[#9c826b] border-[#e6dcc8] hover:bg-[#fffaeb]'
               }`}
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : isWatched ? (
-              <CheckCircle2 size={14} />
+              <CheckCircle2 size={16} strokeWidth={2.5} />
             ) : (
-              <Circle size={14} />
+              <Circle size={16} strokeWidth={2.5} />
             )}
-            {isWatched ? '시청완료' : '미시청'}
+            {isWatched ? '완료' : '체크'}
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation()
               onQuiz(video)
             }}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg font-medium transition-all text-xs ${isQuizCompleted
-              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isQuizCompleted
+              ? 'bg-amber-100 text-amber-700 border-amber-500 hover:bg-amber-200'
+              : 'bg-violet-100 text-violet-600 border-violet-400 hover:bg-violet-200'
               }`}
           >
             {isQuizCompleted ? (
               <>
-                <Trophy size={14} />
-                퀴즈완료
+                <Trophy size={16} strokeWidth={2.5} />
+                성공!
               </>
             ) : (
               <>
-                <BrainCircuit size={14} />
+                <BrainCircuit size={16} strokeWidth={2.5} />
                 퀴즈
               </>
             )}
