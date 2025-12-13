@@ -9,7 +9,7 @@ import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
 import QuizModal from '@/components/QuizModal'
 import VideoPlayerModal from '@/components/VideoPlayerModal'
-import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key } from 'lucide-react'
+import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2 } from 'lucide-react'
 import { subDays } from 'date-fns'
 import EmblemModal, { hasWeeklyEmblem, getCurrentWeekNumber } from '@/components/EmblemModal'
 import Link from 'next/link'
@@ -245,6 +245,51 @@ export default function Home() {
     }
   }
 
+  // Rename channel
+  const handleRenameChannel = async (oldName: string) => {
+    const newName = window.prompt(`'${oldName}' 채널의 새로운 이름을 입력하세요:`, oldName)
+
+    if (!newName || newName === oldName) return
+
+    // Check if new name already exists
+    if (channelNames.includes(newName)) {
+      alert('이미 존재하는 채널 이름입니다.')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // 1. Update 'channels' table
+      const { error: channelError } = await supabase
+        .from('channels')
+        .update({ title: newName })
+        .eq('title', oldName)
+
+      if (channelError) throw channelError
+
+      // 2. Update 'videos' table (if denormalized)
+      const { error: videoError } = await supabase
+        .from('videos')
+        .update({ channel_name: newName })
+        .eq('channel_name', oldName)
+
+      if (videoError) throw videoError
+
+      // 3. Update local state
+      // We can either refetch or manually update. Refetching is safer for consistency.
+      await fetchData()
+      setActiveChannel(newName)
+      alert('채널 이름이 변경되었습니다.')
+
+    } catch (error: any) {
+      console.error('Error renaming channel:', error)
+      alert('채널 이름 변경 실패: ' + (error?.message || '알 수 없는 오류'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Group videos by channel
   const channelData = useMemo(() => {
     const grouped = videos.reduce((acc, video) => {
@@ -314,123 +359,118 @@ export default function Home() {
           borderBottom: '4px solid #5d4037'
         }}
       >
-        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 h-auto md:h-20 py-4 md:py-0 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-amber-400 p-[2px] rounded-full border-4 border-white shadow-lg overflow-hidden w-16 h-16 relative -ml-2">
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-2 md:py-0 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 md:h-20 h-auto">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="bg-amber-400 p-[2px] rounded-full border-2 md:border-4 border-white shadow-lg overflow-hidden w-10 h-10 md:w-16 md:h-16 relative -ml-1 md:-ml-2">
               <img src="/assets/theme/teacher_avatar.jpg" className="w-full h-full object-cover rounded-full" alt="Teacher Avatar" />
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" style={{ textShadow: '2px 2px 0 #5d4037' }}>
+            <h1 className="text-lg md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" style={{ textShadow: '2px 2px 0 #5d4037' }}>
               형석쌤 공부용 사이트
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 text-sm">
-            <div className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
-              <Flame size={18} className={streak > 0 ? "fill-orange-500 text-orange-500" : ""} />
-              <span className="font-extrabold text-base">{streak}</span>
-              <span className="hidden sm:inline text-xs font-bold">일 연속</span>
+          <div className="flex items-center gap-2 md:gap-3 text-sm flex-wrap justify-center">
+            <div className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
+              <Flame size={16} className={streak > 0 ? "fill-orange-500 text-orange-500" : ""} />
+              <span className="font-extrabold text-sm md:text-base">{streak}</span>
+              <span className="inline text-[10px] md:text-xs font-bold">일 연속</span>
             </div>
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-4 py-2 rounded-2xl transition-all cursor-pointer shadow-md"
+              className="flex items-center gap-1.5 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
             >
               {hasWeeklyEmblem(streak) && (
                 <div className="relative">
                   <img
                     src="/img_bonus/BONUS.jpg"
                     alt="Weekly Emblem"
-                    className="w-6 h-6 rounded-full object-cover border-2 border-amber-400 shadow-sm"
+                    className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover border-2 border-amber-400 shadow-sm"
                   />
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
                     <Trophy size={6} className="text-yellow-800" />
                   </div>
                 </div>
               )}
-              <UserCircle size={20} className="text-amber-500" />
-              <span className="font-bold text-sm">{user.username}</span>
+              <UserCircle size={18} className="text-amber-500 md:w-5 md:h-5" />
+              <span className="font-bold text-xs md:text-sm">{user.username}</span>
             </button>
             <Link
               href="/change-password"
-              className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
+              className="p-1.5 md:p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
               title="비밀번호 변경"
             >
-              <Key size={18} />
+              <Key size={16} className="md:w-[18px] md:h-[18px]" />
             </Link>
-            <button onClick={logout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="로그아웃">
-              <LogOut size={18} />
+            <button onClick={logout} className="p-1.5 md:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="로그아웃">
+              <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
-            {user.isAdmin && (
-              <Link
-                href="/admin/approvals"
-                className="p-2 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
-                title="회원가입 승인"
-              >
-                <Shield size={18} />
-              </Link>
-            )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-6 md:py-8">
+        {/* Stats Cards - Grid on Mobile (App Icons), Grid on Desktop (Cards) */}
+        <section className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6 mb-4 md:mb-8">
           {/* Today's Learning Card */}
-          <div className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-4 bg-[#e6dcc8]/30"></div>
-            <div className="p-5 flex items-center gap-5">
-              <div className={`p-4 rounded-2xl shadow-inner ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                <CalendarCheck size={28} strokeWidth={2.5} />
+          <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group h-full">
+            <div className="absolute top-0 left-0 w-full h-2 md:h-4 bg-[#e6dcc8]/30"></div>
+            <div className="p-2 md:p-5 flex flex-col md:flex-row items-center justify-center md:judge-start gap-1 md:gap-5 h-full text-center md:text-left">
+              <div className={`p-2 md:p-4 rounded-xl md:rounded-2xl shadow-inner ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                <CalendarCheck size={20} className="md:w-7 md:h-7" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#8b5e3c] mb-1 opacity-70">오늘의 학습</p>
-                <p className={`text-xl font-black ${todayWatched ? 'text-emerald-600' : 'text-slate-400'}`}>{todayWatched ? '완료함!' : '아직 안함'}</p>
+                <p className="text-[10px] md:text-sm font-bold text-[#8b5e3c] mb-0 md:mb-1 opacity-70 whitespace-nowrap">오늘의 학습</p>
+                <p className={`text-xs md:text-xl font-black ${todayWatched ? 'text-emerald-600' : 'text-slate-400'} whitespace-nowrap`}>{todayWatched ? '완료!' : '아직...'}</p>
               </div>
             </div>
-            {todayWatched && <div className="absolute -bottom-2 -right-2 opacity-20 rotate-12"><img src="/assets/theme/leaf_icon_green.png" className="w-24 h-24" /></div>}
+            {todayWatched && <div className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 opacity-20 rotate-12"><img src="/assets/theme/leaf_icon_green.png" className="w-8 h-8 md:w-24 md:h-24" /></div>}
           </div>
+
+          {/* Weekly Emblem Card */}
           <button
             onClick={() => setEmblemModalOpen(true)}
-            className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden group hover:translate-y-1 hover:shadow-[0_4px_0_rgba(214,204,184,1)] transition-all cursor-pointer w-full text-left"
+            className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group hover:translate-y-1 hover:shadow-[0_4px_0_rgba(214,204,184,1)] transition-all cursor-pointer w-full text-center md:text-left h-full"
           >
-            <div className="p-5 flex items-center gap-4 relative z-10">
-              <div className={`w-14 h-14 rounded-2xl overflow-hidden shadow-md border-2 border-white ${streak >= 7 ? 'ring-2 ring-amber-400' : 'grayscale opacity-60'}`}>
+            <div className="p-2 md:p-5 flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-4 relative z-10 h-full">
+              <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl overflow-hidden shadow-md border-2 border-white ${streak >= 7 ? 'ring-2 ring-amber-400' : 'grayscale opacity-60'}`}>
                 <img
                   src={currentWeekEmblem}
                   alt="Weekly Emblem"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-gray-400 mb-0.5">이번 주 엠블럼</p>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center md:items-start w-full md:w-auto">
+                <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 whitespace-nowrap">이번 주 엠블럼</p>
+                <div className="flex items-center gap-1 md:gap-2">
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5, 6, 7].map(i => (
                       <div
                         key={i}
-                        className={`w-2 h-2 rounded-full ${i <= Math.min(streak, 7) ? 'bg-green-500' : 'bg-gray-200'}`}
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i <= Math.min(streak, 7) ? 'bg-green-500' : 'bg-gray-200'}`}
                       />
                     ))}
                   </div>
-                  <span className="text-xs font-medium text-gray-600">{Math.min(streak, 7)}/7</span>
+                  <span className="hidden md:inline text-xs font-medium text-gray-600">{Math.min(streak, 7)}/7</span>
                 </div>
               </div>
             </div>
           </button>
-          <div className="bg-[#fdfbf7] p-1 rounded-[2rem] shadow-[0_8px_0_rgba(214,204,184,1)] border-4 border-[#e6dcc8] relative overflow-hidden">
+
+          {/* Total Watch Card */}
+          <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden h-full">
             <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-amber-50 to-transparent"></div>
-            <div className="p-5 flex items-center justify-between relative z-10">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <img src="/assets/theme/bell_bag_icon.png" className="w-5 h-5" />
-                  <p className="text-sm font-bold text-[#8b5e3c] opacity-70">총 시청 횟수</p>
+            <div className="p-2 md:p-5 flex flex-col md:flex-row items-center justify-center md:justify-between relative z-10 h-full gap-1">
+              <div className="text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-1 md:gap-2 mb-0 md:mb-1">
+                  <img src="/assets/theme/bell_bag_icon.png" className="w-3 h-3 md:w-5 md:h-5" />
+                  <p className="text-[10px] md:text-sm font-bold text-[#8b5e3c] opacity-70 whitespace-nowrap">총 시청</p>
                 </div>
-                <p className="text-3xl font-black text-[#5d4037]">
+                <p className="text-lg md:text-3xl font-black text-[#5d4037]">
                   {videos.reduce((acc, curr) => acc + curr.watch_count, 0)}
-                  <span className="text-lg font-bold opacity-60 ml-1">회</span>
+                  <span className="text-xs md:text-lg font-bold opacity-60 ml-1">회</span>
                 </p>
               </div>
-              <img src="/assets/theme/bell_bag_icon.png" className="w-16 h-16 opacity-20 absolute -right-2 -bottom-2 rotate-12" />
+              <img src="/assets/theme/bell_bag_icon.png" className="w-8 h-8 md:w-16 md:h-16 opacity-20 absolute -right-1 -bottom-1 md:-right-2 md:-bottom-2 rotate-12" />
             </div>
           </div>
         </section>
@@ -439,11 +479,11 @@ export default function Home() {
         <AddVideoForm onVideoAdded={fetchData} />
 
         {/* Channel Tabs & Content */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-2 md:mt-6">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
-            <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-4 mt-6">
-              <div className="flex px-4 pt-4 gap-2">
+            <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-2 md:mx-4 mt-2 md:mt-6 scrollbar-hide">
+              <div className="flex px-2 md:px-4 pt-2 md:pt-4 gap-1 md:gap-2">
                 {channelNames.map((channelName) => {
                   const channelVideos = channelData[channelName]
                   const watched = channelVideos.filter(v => v.watch_count > 0).length
@@ -457,16 +497,26 @@ export default function Home() {
                     >
                       <button
                         onClick={() => setActiveChannel(channelName)}
-                        className={`px-6 py-3 text-sm font-black rounded-t-2xl transition-all flex items-center gap-2 border-t-4 border-x-4 ${isActive
-                          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[4px]'
+                        className={`px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-black rounded-t-xl md:rounded-t-2xl transition-all flex items-center gap-1.5 md:gap-2 border-t-2 md:border-t-4 border-x-2 md:border-x-4 ${isActive
+                          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[2px] md:translate-y-[4px]'
                           : 'bg-[#fffaeb] border-transparent text-[#9c826b] hover:bg-[#fff0c7]'
                           }`}
                         style={isActive ? { backgroundImage: "url('/assets/theme/wood_texture_light.png')", backgroundSize: '150px' } : {}}
                       >
-                        <span className="max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
+                        <span className="max-w-[80px] md:max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
+                        <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
                           {watched}/{total}
                         </span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRenameChannel(channelName)
+                        }}
+                        className="absolute -top-2 right-6 bg-blue-400 text-white p-1 rounded-full shadow-md hover:bg-blue-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+                        title="채널 이름 변경"
+                      >
+                        <Edit2 size={12} strokeWidth={3} />
                       </button>
                       <button
                         onClick={(e) => {
@@ -487,17 +537,17 @@ export default function Home() {
 
           {/* Progress Bar & Filters */}
           {activeChannel && totalInChannel > 0 && (
-            <div className="mx-4 bg-[#fdfbf7] border-x-4 border-b-4 border-[#e6dcc8] rounded-b-[2rem] p-6 mb-6 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="mx-2 md:mx-4 bg-[#fdfbf7] border-x-4 border-b-4 border-[#e6dcc8] rounded-b-[2rem] p-3 md:p-6 mb-4 md:mb-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 mb-2 md:mb-4">
                 {/* Filter Buttons */}
-                <div className="flex items-center gap-2">
-                  <div className="bg-[#e6dcc8] p-1.5 rounded-full text-[#8b5e3c]">
-                    <Filter size={16} />
+                <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+                  <div className="bg-[#e6dcc8] p-1 md:p-1.5 rounded-full text-[#8b5e3c] shrink-0">
+                    <Filter size={14} className="md:w-4 md:h-4" />
                   </div>
-                  <div className="flex bg-[#e6dcc8]/30 p-1 rounded-full">
+                  <div className="flex bg-[#e6dcc8]/30 p-1 rounded-full shrink-0">
                     <button
                       onClick={() => setFilterType('all')}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'all'
+                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'all'
                         ? 'bg-[#74c74a] text-white shadow-md'
                         : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
                         }`}
@@ -506,7 +556,7 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setFilterType('unwatched')}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'unwatched'
+                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'unwatched'
                         ? 'bg-orange-400 text-white shadow-md'
                         : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
                         }`}
@@ -515,7 +565,7 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setFilterType('watched')}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${filterType === 'watched'
+                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'watched'
                         ? 'bg-[#74c74a] text-white shadow-md'
                         : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
                         }`}
@@ -526,14 +576,14 @@ export default function Home() {
                 </div>
 
                 {/* Progress Text */}
-                <div className="text-right">
-                  <span className="text-sm font-bold text-[#8b5e3c] mr-2">진행률</span>
-                  <span className="text-lg font-black text-[#74c74a]">{progressPercent}%</span>
+                <div className="text-right flex items-center justify-end gap-2 md:block">
+                  <span className="text-xs md:text-sm font-bold text-[#8b5e3c] mr-2">진행률</span>
+                  <span className="text-sm md:text-lg font-black text-[#74c74a]">{progressPercent}%</span>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="h-5 bg-[#e6dcc8] rounded-full overflow-hidden p-1 shadow-inner">
+              <div className="h-3 md:h-5 bg-[#e6dcc8] rounded-full overflow-hidden p-0.5 md:p-1 shadow-inner">
                 <div
                   className="h-full bg-[repeating-linear-gradient(45deg,#74c74a,#74c74a_10px,#68b642_10px,#68b642_20px)] rounded-full transition-all duration-500 ease-out border-2 border-[#86c95c]"
                   style={{ width: `${progressPercent}%` }}
