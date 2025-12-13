@@ -1,16 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { Lock, User, Loader2, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 
 export default function LoginPage() {
+    const router = useRouter()
+    const { user, loading: authLoading, login } = useAuth()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const { login } = useAuth()
+
+    // If user is already logged in, redirect to main page
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.replace('/') // Use replace to prevent back button loop
+        }
+    }, [user, authLoading, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

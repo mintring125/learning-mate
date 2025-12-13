@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = await res.json()
             setUser(data.user)
             localStorage.setItem('learning_mate_user', JSON.stringify(data.user))
-            router.push('/')
+            router.replace('/') // Use replace to prevent back button loop
         } catch (error) {
             throw error
         }
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = () => {
         setUser(null)
         localStorage.removeItem('learning_mate_user')
-        router.push('/login')
+        router.replace('/login') // Use replace to prevent back button loop
     }
 
     return (

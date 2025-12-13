@@ -41,6 +41,7 @@ export const getCurrentWeekNumber = (): number => {
 export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, username }: EmblemModalProps) {
     const [emblems, setEmblems] = useState<EmblemType[]>([])
     const [loading, setLoading] = useState(true)
+    const [enlargedEmblem, setEnlargedEmblem] = useState<string | null>(null) // For zoom view
 
     // Fetch emblems on mount
     useEffect(() => {
@@ -242,7 +243,8 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                             {emblems.map((emblem, index) => (
                                 <div
                                     key={emblem.filename}
-                                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 bg-white ${index === currentEmblemIndex ? 'border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.5)] scale-105' : 'border-[#e6dcc8] opacity-70'
+                                    onClick={() => setEnlargedEmblem(emblem.path)}
+                                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 bg-white cursor-pointer hover:scale-110 transition-transform ${index === currentEmblemIndex ? 'border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.5)] scale-105' : 'border-[#e6dcc8] opacity-70 hover:opacity-100'
                                         }`}
                                 >
                                     <img
@@ -256,6 +258,31 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                     </div>
                 )}
             </div>
+
+            {/* Enlarged Emblem Modal */}
+            {enlargedEmblem && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setEnlargedEmblem(null)}
+                >
+                    <div className="relative animate-in zoom-in-95 duration-300">
+                        <img
+                            src={enlargedEmblem}
+                            alt="Enlarged Emblem"
+                            className="max-w-[90vw] max-h-[80vh] rounded-3xl shadow-2xl border-8 border-white"
+                        />
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setEnlargedEmblem(null)
+                            }}
+                            className="absolute -top-4 -right-4 bg-white text-gray-600 hover:text-red-500 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

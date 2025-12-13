@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import confetti from 'canvas-confetti'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
 import { Video, VideoWithLog } from '@/types'
@@ -9,12 +10,108 @@ import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
 import QuizModal from '@/components/QuizModal'
 import VideoPlayerModal from '@/components/VideoPlayerModal'
-import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2 } from 'lucide-react'
+import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical } from 'lucide-react'
 import { subDays } from 'date-fns'
 import EmblemModal, { hasWeeklyEmblem, getCurrentWeekNumber } from '@/components/EmblemModal'
 import Link from 'next/link'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 type FilterType = 'all' | 'unwatched' | 'watched'
+
+// SortableChannelTab component for drag-and-drop
+interface SortableChannelTabProps {
+  channelName: string
+  watched: number
+  total: number
+  isActive: boolean
+  onSelect: () => void
+  onRename: () => void
+  onDelete: () => void
+}
+
+function SortableChannelTab({ channelName, watched, total, isActive, onSelect, onRename, onDelete }: SortableChannelTabProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: channelName })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group"
+    >
+      <button
+        onClick={onSelect}
+        className={`px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-black rounded-t-xl md:rounded-t-2xl transition-all flex items-center gap-1.5 md:gap-2 border-t-2 md:border-t-4 border-x-2 md:border-x-4 ${isActive
+          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[2px] md:translate-y-[4px]'
+          : 'bg-[#fffaeb] border-transparent text-[#9c826b] hover:bg-[#fff0c7]'
+          }`}
+        style={isActive ? { backgroundImage: "url('/assets/theme/wood_texture_light.png')", backgroundSize: '150px' } : {}}
+      >
+        {/* Drag Handle */}
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-[#b09b86] hover:text-[#8b5e3c] touch-none"
+        >
+          <GripVertical size={14} className="md:w-4 md:h-4" />
+        </span>
+        <span className="max-w-[80px] md:max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
+        <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
+          {watched}/{total}
+        </span>
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onRename()
+        }}
+        className="absolute -top-2 right-6 bg-blue-400 text-white p-1 rounded-full shadow-md hover:bg-blue-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+        title="채널 이름 변경"
+      >
+        <Edit2 size={12} strokeWidth={3} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
+        className="absolute -top-2 -right-2 bg-red-400 text-white p-1 rounded-full shadow-md hover:bg-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+        title="채널 삭제"
+      >
+        <X size={12} strokeWidth={3} />
+      </button>
+    </div>
+  )
+}
 
 export default function Home() {
   const { user, loading: authLoading, logout } = useAuth()
@@ -30,6 +127,24 @@ export default function Home() {
   const [emblemModalOpen, setEmblemModalOpen] = useState(false)
   const [earnedEmblems, setEarnedEmblems] = useState<string[]>([])
   const [currentWeekEmblem, setCurrentWeekEmblem] = useState<string>('/img_bonus/BONUS.jpg')
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [showEmblemCelebration, setShowEmblemCelebration] = useState(false)
+  const [channelOrder, setChannelOrder] = useState<string[]>([]) // Saved order of channels
+  const prevTodayWatched = useRef<boolean | null>(null)
+  const prevStreak = useRef<number | null>(null)
+  const isInitialLoadComplete = useRef(false) // Flag to prevent effects on initial data load
+
+  // dnd-kit sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // Auth redirect effect
   useEffect(() => {
@@ -146,9 +261,117 @@ export default function Home() {
       } catch (err) {
         console.error('Auto-sync failed', err)
       }
+
+      // Mark initial load as complete - effects should only trigger after this
+      isInitialLoadComplete.current = true
     }
     init()
   }, [user])
+
+  // Celebration effect when today's learning is completed
+  useEffect(() => {
+    // Only trigger after initial load is complete, when todayWatched changes from false to true
+    // Also skip if streak is reaching 7 (emblem effect will handle it)
+    const willTriggerEmblem = prevStreak.current !== null && prevStreak.current < 7 && streak >= 7
+
+    if (isInitialLoadComplete.current &&
+      prevTodayWatched.current === false &&
+      todayWatched === true &&
+      !willTriggerEmblem) {
+      setShowCelebration(true)
+
+      // Fire confetti with leaf-like colors
+      const colors = ['#74c74a', '#8dd775', '#68b642', '#a8e0ff', '#ffc107']
+
+      // First burst
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: colors,
+        shapes: ['circle', 'square'],
+        scalar: 1.2,
+      })
+
+      // Second burst after a small delay
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: colors,
+        })
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: colors,
+        })
+      }, 250)
+
+      // Hide celebration toast after 3 seconds
+      setTimeout(() => {
+        setShowCelebration(false)
+      }, 3000)
+    }
+    prevTodayWatched.current = todayWatched
+  }, [todayWatched, streak])
+
+  // Emblem celebration effect when 7-day streak is achieved
+  useEffect(() => {
+    // Only trigger after initial load is complete, when streak changes from below 7 to 7 or above
+    if (isInitialLoadComplete.current &&
+      prevStreak.current !== null &&
+      prevStreak.current < 7 &&
+      streak >= 7) {
+      setShowEmblemCelebration(true)
+
+      // Fire golden confetti for emblem
+      const goldenColors = ['#ffc107', '#ffca28', '#ffd54f', '#ffe082', '#fff176']
+
+      // Multiple bursts for grand celebration
+      const fireConfetti = () => {
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.5 },
+          colors: goldenColors,
+          shapes: ['circle', 'square'],
+          scalar: 1.5,
+        })
+      }
+
+      fireConfetti()
+      setTimeout(fireConfetti, 300)
+      setTimeout(fireConfetti, 600)
+
+      // Side bursts
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          angle: 60,
+          spread: 80,
+          origin: { x: 0, y: 0.6 },
+          colors: goldenColors,
+        })
+        confetti({
+          particleCount: 80,
+          angle: 120,
+          spread: 80,
+          origin: { x: 1, y: 0.6 },
+          colors: goldenColors,
+        })
+      }, 400)
+
+      // Hide emblem celebration after 4 seconds
+      setTimeout(() => {
+        setShowEmblemCelebration(false)
+      }, 4000)
+    }
+    prevStreak.current = streak
+  }, [streak])
 
   // Toggle watch status
   const handleToggleWatch = async (videoId: string, isWatched: boolean) => {
@@ -301,7 +524,45 @@ export default function Home() {
     return grouped
   }, [videos])
 
-  const channelNames = Object.keys(channelData)
+  const channelNamesRaw = Object.keys(channelData)
+
+  // Sort channels by saved order (persisted in localStorage)
+  const channelNames = useMemo(() => {
+    if (channelOrder.length === 0) return channelNamesRaw
+
+    // Sort by saved order, append any new channels at the end
+    const ordered = [...channelOrder].filter(name => channelNamesRaw.includes(name))
+    const newChannels = channelNamesRaw.filter(name => !channelOrder.includes(name))
+    return [...ordered, ...newChannels]
+  }, [channelNamesRaw, channelOrder])
+
+  // Load channel order from localStorage on mount
+  useEffect(() => {
+    const savedOrder = localStorage.getItem('channelOrder')
+    if (savedOrder) {
+      try {
+        setChannelOrder(JSON.parse(savedOrder))
+      } catch (e) {
+        console.error('Failed to parse channel order', e)
+      }
+    }
+  }, [])
+
+  // Handle drag end - reorder channels
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = channelNames.indexOf(active.id as string)
+      const newIndex = channelNames.indexOf(over.id as string)
+
+      const newOrder = arrayMove(channelNames, oldIndex, newIndex)
+      setChannelOrder(newOrder)
+
+      // Save to localStorage
+      localStorage.setItem('channelOrder', JSON.stringify(newOrder))
+    }
+  }
 
   // Set default active channel (or reset to null if no channels)
   useEffect(() => {
@@ -483,55 +744,38 @@ export default function Home() {
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
             <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-2 md:mx-4 mt-2 md:mt-6 scrollbar-hide">
-              <div className="flex px-2 md:px-4 pt-2 md:pt-4 gap-1 md:gap-2">
-                {channelNames.map((channelName) => {
-                  const channelVideos = channelData[channelName]
-                  const watched = channelVideos.filter(v => v.watch_count > 0).length
-                  const total = channelVideos.length
-                  const isActive = activeChannel === channelName
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={channelNames}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex px-2 md:px-4 pt-2 md:pt-4 gap-1 md:gap-2">
+                    {channelNames.map((channelName) => {
+                      const channelVideos = channelData[channelName]
+                      const watched = channelVideos.filter(v => v.watch_count > 0).length
+                      const total = channelVideos.length
+                      const isActive = activeChannel === channelName
 
-                  return (
-                    <div
-                      key={channelName}
-                      className="relative group"
-                    >
-                      <button
-                        onClick={() => setActiveChannel(channelName)}
-                        className={`px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-black rounded-t-xl md:rounded-t-2xl transition-all flex items-center gap-1.5 md:gap-2 border-t-2 md:border-t-4 border-x-2 md:border-x-4 ${isActive
-                          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[2px] md:translate-y-[4px]'
-                          : 'bg-[#fffaeb] border-transparent text-[#9c826b] hover:bg-[#fff0c7]'
-                          }`}
-                        style={isActive ? { backgroundImage: "url('/assets/theme/wood_texture_light.png')", backgroundSize: '150px' } : {}}
-                      >
-                        <span className="max-w-[80px] md:max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
-                        <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
-                          {watched}/{total}
-                        </span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRenameChannel(channelName)
-                        }}
-                        className="absolute -top-2 right-6 bg-blue-400 text-white p-1 rounded-full shadow-md hover:bg-blue-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
-                        title="채널 이름 변경"
-                      >
-                        <Edit2 size={12} strokeWidth={3} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteChannel(channelName)
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-400 text-white p-1 rounded-full shadow-md hover:bg-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
-                        title="채널 삭제"
-                      >
-                        <X size={12} strokeWidth={3} />
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
+                      return (
+                        <SortableChannelTab
+                          key={channelName}
+                          channelName={channelName}
+                          watched={watched}
+                          total={total}
+                          isActive={isActive}
+                          onSelect={() => setActiveChannel(channelName)}
+                          onRename={() => handleRenameChannel(channelName)}
+                          onDelete={() => handleDeleteChannel(channelName)}
+                        />
+                      )
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
 
@@ -660,6 +904,57 @@ export default function Home() {
         earnedEmblems={earnedEmblems}
         username={user?.username || 'User'}
       />
+
+      {/* Celebration Toast */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="animate-bounce bg-gradient-to-r from-emerald-500 to-green-400 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border-4 border-white">
+            <div className="bg-white/20 p-3 rounded-full">
+              <CalendarCheck size={32} className="text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-black drop-shadow-md">오늘의 학습 완료! 🎉</p>
+              <p className="text-sm opacity-90 font-bold">수고했어요! 내일도 화이팅!</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Emblem Celebration Modal */}
+      {showEmblemCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
+            {/* Glowing ring effect */}
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 blur-xl opacity-75 animate-pulse scale-110"></div>
+              <div className="relative bg-gradient-to-br from-amber-100 to-amber-50 p-3 rounded-full border-8 border-amber-400 shadow-2xl">
+                <img
+                  src={currentWeekEmblem}
+                  alt="Weekly Emblem"
+                  className="w-48 h-48 md:w-64 md:h-64 rounded-full object-cover shadow-inner"
+                />
+              </div>
+              {/* Trophy badge */}
+              <div className="absolute -bottom-2 -right-2 bg-amber-500 p-3 rounded-full shadow-lg border-4 border-white animate-bounce">
+                <Trophy size={28} className="text-white fill-white" />
+              </div>
+            </div>
+
+            {/* Text */}
+            <div className="text-center">
+              <p className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+                🏆 엠블럼 획득! 🏆
+              </p>
+              <p className="text-xl text-amber-200 font-bold">
+                7일 연속 학습 달성!
+              </p>
+              <p className="text-lg text-white/80 mt-2">
+                대단해요! 계속 이 기세를 유지해봐요!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
