@@ -620,28 +620,28 @@ export default function Home() {
           borderBottom: '4px solid #5d4037'
         }}
       >
-        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-2 md:py-0 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 md:h-20 h-auto">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="bg-amber-400 p-[2px] rounded-full border-2 md:border-4 border-white shadow-lg overflow-hidden w-10 h-10 md:w-16 md:h-16 relative -ml-1 md:-ml-2">
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-2 md:px-4 py-1.5 md:py-0 flex flex-row items-center justify-between gap-2 md:gap-4 md:h-20 h-auto">
+          <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+            <div className="bg-amber-400 p-[2px] rounded-full border-2 md:border-4 border-white shadow-lg overflow-hidden w-8 h-8 md:w-16 md:h-16 relative">
               <img src="/assets/theme/teacher_avatar.jpg" className="w-full h-full object-cover rounded-full" alt="Teacher Avatar" />
             </div>
-            <h1 className="text-lg md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" style={{ textShadow: '2px 2px 0 #5d4037' }}>
+            <h1 className="text-sm md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] whitespace-nowrap" style={{ textShadow: '2px 2px 0 #5d4037' }}>
               형석쌤 공부용 사이트
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 text-sm flex-wrap justify-center">
-            <div className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
-              <Flame size={16} className={streak > 0 ? "fill-orange-500 text-orange-500" : ""} />
-              <span className="font-extrabold text-sm md:text-base">{streak}</span>
-              <span className="inline text-[10px] md:text-xs font-bold">일 연속</span>
+          <div className="flex items-center gap-1.5 md:gap-3 text-sm">
+            <div className={`flex items-center gap-1 px-2 md:px-4 py-1 md:py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
+              <Flame size={14} className={`md:w-4 md:h-4 ${streak > 0 ? "fill-orange-500 text-orange-500" : ""}`} />
+              <span className="font-extrabold text-xs md:text-base">{streak}</span>
+              <span className="hidden sm:inline text-[10px] md:text-xs font-bold">일 연속</span>
             </div>
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-1.5 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
+              className="flex items-center gap-1 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-2 md:px-4 py-1 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
             >
               {hasWeeklyEmblem(streak) && (
-                <div className="relative">
+                <div className="relative hidden sm:block">
                   <img
                     src="/img_bonus/BONUS.jpg"
                     alt="Weekly Emblem"
@@ -652,18 +652,18 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              <UserCircle size={18} className="text-amber-500 md:w-5 md:h-5" />
-              <span className="font-bold text-xs md:text-sm">{user.username}</span>
+              <UserCircle size={16} className="text-amber-500 md:w-5 md:h-5" />
+              <span className="font-bold text-[10px] md:text-sm max-w-[60px] md:max-w-none truncate">{user.username}</span>
             </button>
             <Link
               href="/change-password"
-              className="p-1.5 md:p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
+              className="p-1 md:p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
               title="비밀번호 변경"
             >
-              <Key size={16} className="md:w-[18px] md:h-[18px]" />
+              <Key size={14} className="md:w-[18px] md:h-[18px]" />
             </Link>
-            <button onClick={logout} className="p-1.5 md:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="로그아웃">
-              <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
+            <button onClick={logout} className="p-1 md:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="로그아웃">
+              <LogOut size={14} className="md:w-[18px] md:h-[18px]" />
             </button>
           </div>
         </div>

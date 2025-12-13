@@ -22,6 +22,9 @@ const PASS_THRESHOLD = 7
 export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'playing' | 'finished' | 'error'>('idle')
   const [questions, setQuestions] = useState<Question[]>([])
+  const [videoSummary, setVideoSummary] = useState<string>('') // Gemini's video summary
+  const [hasTranscript, setHasTranscript] = useState<boolean>(false)
+  const [transcriptLength, setTranscriptLength] = useState<number>(0)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
@@ -33,6 +36,7 @@ export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalP
   const handleGenerate = async () => {
     setStatus('loading')
     setQuestions([])
+    setVideoSummary('')
     setCurrentIndex(0)
     setCorrectCount(0)
     setSelectedAnswer(null)
@@ -46,6 +50,7 @@ export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalP
         body: JSON.stringify({
           title: video.title,
           channelName: video.channel_name || '',
+          youtubeUrl: video.url, // Pass YouTube URL for content analysis
           questionCount: TOTAL_QUESTIONS
         }),
       })
@@ -61,9 +66,11 @@ export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalP
       }
 
       setQuestions(data.questions)
+      setVideoSummary(data.videoSummary || '')
+      setHasTranscript(data.hasTranscript || false)
+      setTranscriptLength(data.transcriptLength || 0)
       setStatus('playing')
     } catch (error: any) {
-      console.error('Quiz error:', error)
       setErrorMessage(error.message || '퀴즈 생성에 실패했습니다.')
       setStatus('error')
     }
@@ -150,6 +157,26 @@ export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalP
               <p className="text-xs text-gray-400 mt-1">채널: {video.channel_name}</p>
             )}
           </div>
+
+          {/* Video Summary from Gemini */}
+          {status === 'playing' && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={14} className="text-blue-500" />
+                  <span className="text-xs font-bold text-blue-600">AI 영상 분석 결과</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${hasTranscript ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                  {hasTranscript ? `✓ 자막 기반 (${transcriptLength.toLocaleString()}자)` : '✗ 제목 기반'}
+                </span>
+              </div>
+              {videoSummary ? (
+                <p className="text-sm text-gray-700 leading-relaxed">{videoSummary}</p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">요약 정보가 없습니다</p>
+              )}
+            </div>
+          )}
 
           {/* Idle State */}
           {status === 'idle' && (
@@ -307,8 +334,8 @@ export default function QuizModal({ video, onClose, onQuizComplete }: QuizModalP
                 <button
                   onClick={handleFinish}
                   className={`px-6 py-3 rounded-xl font-medium transition-colors ${isPassed
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                 >
                   {isPassed ? '완료' : '닫기'}
