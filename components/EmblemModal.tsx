@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Trophy, Lock, Star, Calendar, Sparkles } from 'lucide-react'
+import Image from 'next/image'
 
 interface EmblemType {
     filename: string
@@ -161,10 +162,13 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                             <div className="w-32 h-32 rounded-2xl bg-gray-100 animate-pulse" />
                         ) : currentWeekEmblem ? (
                             <div className={`relative group ${hasCurrentWeekEmblem ? '' : 'grayscale opacity-70'}`}>
-                                <img
+                                <Image
                                     src={currentWeekEmblem.path}
                                     alt="Weekly Emblem"
-                                    className="w-40 h-40 rounded-[2rem] object-cover shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-white transform group-hover:scale-105 transition-transform duration-300"
+                                    width={160}
+                                    height={160}
+                                    className="rounded-[2rem] object-cover shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-white transform group-hover:scale-105 transition-transform duration-300"
+                                    loading="lazy"
                                 />
                                 {!hasCurrentWeekEmblem && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-[2rem]">
@@ -201,11 +205,14 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                                 const emblem = emblems[emblemIndex]
                                 return (
                                     <div key={index} className="relative group cursor-pointer">
-                                        <div className="bg-white p-1 rounded-xl shadow-[0_4px_0_rgba(214,204,184,1)] border-2 border-[#e6dcc8] hover:-translate-y-1 transition-transform">
-                                            <img
+                                        <div className="bg-white p-1 rounded-xl shadow-[0_4px_0_rgba(214,204,184,1)] border-2 border-[#e6dcc8] hover:-translate-y-1 transition-transform overflow-hidden">
+                                            <Image
                                                 src={emblem?.path || '/img_bonus/BONUS.jpg'}
                                                 alt={`Emblem ${date}`}
+                                                width={100}
+                                                height={100}
                                                 className="w-full aspect-square rounded-lg object-cover"
+                                                loading="lazy"
                                             />
                                         </div>
                                         <div className="absolute -bottom-6 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity">
