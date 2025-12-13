@@ -414,7 +414,7 @@ export default function Home() {
           {/* Today's Learning Card */}
           <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group h-full">
             <div className="absolute top-0 left-0 w-full h-2 md:h-4 bg-[#e6dcc8]/30"></div>
-            <div className="p-2 md:p-5 flex flex-col items-center justify-center gap-1 md:gap-2 h-full text-center">
+            <div className="p-2 md:p-5 flex flex-row items-center justify-start gap-2 md:gap-4 h-full text-left">
               <div className={`p-2 md:p-4 rounded-xl md:rounded-2xl shadow-inner ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
                 <CalendarCheck size={20} className="md:w-7 md:h-7" strokeWidth={2.5} />
               </div>
@@ -431,7 +431,7 @@ export default function Home() {
             onClick={() => setEmblemModalOpen(true)}
             className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group hover:translate-y-1 hover:shadow-[0_4px_0_rgba(214,204,184,1)] transition-all cursor-pointer w-full text-center md:text-left h-full"
           >
-            <div className="p-2 md:p-5 flex flex-col items-center justify-center gap-1 md:gap-2 relative z-10 h-full text-center">
+            <div className="p-2 md:p-5 flex flex-row items-center justify-start gap-2 md:gap-4 relative z-10 h-full text-left">
               <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl overflow-hidden shadow-md border-2 border-white ${streak >= 7 ? 'ring-2 ring-amber-400' : 'grayscale opacity-60'}`}>
                 <img
                   src={currentWeekEmblem}
@@ -439,7 +439,7 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex flex-col items-center w-full">
+              <div className="flex flex-col items-start">
                 <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 whitespace-nowrap">이번 주 엠블럼</p>
                 <div className="flex items-center gap-1 md:gap-2">
                   <div className="flex gap-0.5">
@@ -459,9 +459,9 @@ export default function Home() {
           {/* Total Watch Card */}
           <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden h-full">
             <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-amber-50 to-transparent"></div>
-            <div className="p-2 md:p-5 flex flex-col items-center justify-center relative z-10 h-full gap-1 text-center">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 md:gap-2 mb-0 md:mb-1">
+            <div className="p-2 md:p-5 flex flex-row items-center justify-start relative z-10 h-full gap-2 md:gap-4 text-left">
+              <div className="text-left">
+                <div className="flex items-center justify-start gap-1 md:gap-2 mb-0 md:mb-1">
                   <img src="/assets/theme/bell_bag_icon.png" className="w-3 h-3 md:w-5 md:h-5" />
                   <p className="text-[10px] md:text-sm font-bold text-[#8b5e3c] opacity-70 whitespace-nowrap">총 시청</p>
                 </div>
