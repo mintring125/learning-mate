@@ -10,7 +10,7 @@ import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
 import QuizModal from '@/components/QuizModal'
 import VideoPlayerModal from '@/components/VideoPlayerModal'
-import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical } from 'lucide-react'
+import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { subDays } from 'date-fns'
 import EmblemModal, { hasWeeklyEmblem, getCurrentWeekNumber } from '@/components/EmblemModal'
 import Link from 'next/link'
@@ -130,6 +130,9 @@ export default function Home() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [showEmblemCelebration, setShowEmblemCelebration] = useState(false)
   const [channelOrder, setChannelOrder] = useState<string[]>([]) // Saved order of channels
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done'>('idle')
+  const [newVideosCount, setNewVideosCount] = useState(0)
+  const [showSyncToast, setShowSyncToast] = useState(false)
   const prevTodayWatched = useRef<boolean | null>(null)
   const prevStreak = useRef<number | null>(null)
   const isInitialLoadComplete = useRef(false) // Flag to prevent effects on initial data load
@@ -255,11 +258,26 @@ export default function Home() {
         console.error('Failed to fetch emblems', err)
       }
 
+      // Auto-sync channels for new videos
       try {
-        await fetch('/api/channels/sync', { method: 'POST' })
-        await fetchData()
+        setSyncStatus('syncing')
+        const syncRes = await fetch('/api/channels/sync', { method: 'POST' })
+        const syncData = await syncRes.json()
+        setSyncStatus('done')
+
+        if (syncData.newVideos > 0) {
+          setNewVideosCount(syncData.newVideos)
+          setShowSyncToast(true)
+          await fetchData() // Refresh data to show new videos
+
+          // Hide toast after 4 seconds
+          setTimeout(() => {
+            setShowSyncToast(false)
+          }, 4000)
+        }
       } catch (err) {
         console.error('Auto-sync failed', err)
+        setSyncStatus('idle')
       }
 
       // Mark initial load as complete - effects should only trigger after this
@@ -636,6 +654,13 @@ export default function Home() {
               <span className="font-extrabold text-xs md:text-base">{streak}</span>
               <span className="hidden sm:inline text-[10px] md:text-xs font-bold">일 연속</span>
             </div>
+            {/* Sync Status Indicator */}
+            {syncStatus === 'syncing' && (
+              <div className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 bg-blue-100 border-2 border-blue-300 rounded-full shadow-md">
+                <Loader2 size={14} className="animate-spin text-blue-600" />
+                <span className="text-[10px] md:text-xs font-bold text-blue-600 hidden sm:inline">동기화 중...</span>
+              </div>
+            )}
             <button
               onClick={() => setEmblemModalOpen(true)}
               className="flex items-center gap-1 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-2 md:px-4 py-1 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
@@ -668,6 +693,24 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* New Videos Toast */}
+      {showSyncToast && newVideosCount > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-3 rounded-full shadow-lg shadow-green-300/50 border-2 border-white">
+            <Sparkles size={18} className="animate-pulse" />
+            <span className="font-bold text-sm md:text-base">
+              🎉 새 영상 {newVideosCount}개가 추가되었습니다!
+            </span>
+            <button
+              onClick={() => setShowSyncToast(false)}
+              className="ml-2 p-1 hover:bg-white/20 rounded-full transition-all"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-6 md:py-8">
         {/* Stats Cards - Grid on Mobile (App Icons), Grid on Desktop (Cards) */}

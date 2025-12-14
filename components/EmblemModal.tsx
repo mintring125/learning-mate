@@ -1,7 +1,5 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { X, Trophy, Lock, Star, Calendar, Sparkles } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Trophy, Lock, Star, Calendar, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
 interface EmblemType {
@@ -41,7 +39,7 @@ export const getCurrentWeekNumber = (): number => {
 export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, username }: EmblemModalProps) {
     const [emblems, setEmblems] = useState<EmblemType[]>([])
     const [loading, setLoading] = useState(true)
-    const [enlargedEmblem, setEnlargedEmblem] = useState<string | null>(null) // For zoom view
+    const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null) // For zoom view with index
 
     // Fetch emblems on mount
     useEffect(() => {
@@ -62,6 +60,35 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
             fetchEmblems()
         }
     }, [isOpen])
+
+    // Navigation handlers for enlarged view
+    const handlePrevEmblem = useCallback(() => {
+        if (enlargedIndex !== null && emblems.length > 0) {
+            setEnlargedIndex((enlargedIndex - 1 + emblems.length) % emblems.length)
+        }
+    }, [enlargedIndex, emblems.length])
+
+    const handleNextEmblem = useCallback(() => {
+        if (enlargedIndex !== null && emblems.length > 0) {
+            setEnlargedIndex((enlargedIndex + 1) % emblems.length)
+        }
+    }, [enlargedIndex, emblems.length])
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (enlargedIndex === null) return
+            if (e.key === 'ArrowLeft') {
+                handlePrevEmblem()
+            } else if (e.key === 'ArrowRight') {
+                handleNextEmblem()
+            } else if (e.key === 'Escape') {
+                setEnlargedIndex(null)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [enlargedIndex, handlePrevEmblem, handleNextEmblem])
 
     if (!isOpen) return null
 
@@ -243,7 +270,7 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                             {emblems.map((emblem, index) => (
                                 <div
                                     key={emblem.filename}
-                                    onClick={() => setEnlargedEmblem(emblem.path)}
+                                    onClick={() => setEnlargedIndex(index)}
                                     className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 bg-white cursor-pointer hover:scale-110 transition-transform ${index === currentEmblemIndex ? 'border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.5)] scale-105' : 'border-[#e6dcc8] opacity-70 hover:opacity-100'
                                         }`}
                                 >
@@ -260,25 +287,54 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
             </div>
 
             {/* Enlarged Emblem Modal */}
-            {enlargedEmblem && (
+            {enlargedIndex !== null && emblems[enlargedIndex] && (
                 <div
                     className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setEnlargedEmblem(null)}
+                    onClick={() => setEnlargedIndex(null)}
                 >
-                    <div className="relative animate-in zoom-in-95 duration-300">
-                        <img
-                            src={enlargedEmblem}
-                            alt="Enlarged Emblem"
-                            className="max-w-[90vw] max-h-[80vh] rounded-3xl shadow-2xl border-8 border-white"
-                        />
+                    {/* Navigation Container - buttons close to image */}
+                    <div className="flex items-center gap-4 md:gap-6">
+                        {/* Previous Button */}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
-                                setEnlargedEmblem(null)
+                                handlePrevEmblem()
                             }}
-                            className="absolute -top-4 -right-4 bg-white text-gray-600 hover:text-red-500 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
+                            className="bg-white/90 hover:bg-white text-gray-700 p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-all shrink-0"
                         >
-                            <X size={24} />
+                            <ChevronLeft size={28} strokeWidth={3} />
+                        </button>
+
+                        {/* Emblem Image */}
+                        <div className="relative animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+                            <img
+                                src={emblems[enlargedIndex].path}
+                                alt="Enlarged Emblem"
+                                className="max-w-[70vw] max-h-[70vh] rounded-3xl shadow-2xl border-8 border-white"
+                            />
+                            <button
+                                onClick={() => setEnlargedIndex(null)}
+                                className="absolute -top-4 -right-4 bg-white text-gray-600 hover:text-red-500 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
+                            >
+                                <X size={24} />
+                            </button>
+                            {/* Counter */}
+                            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-white/90 px-4 py-2 rounded-full shadow-lg">
+                                <span className="font-bold text-gray-700">
+                                    {enlargedIndex + 1} / {emblems.length}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Next Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleNextEmblem()
+                            }}
+                            className="bg-white/90 hover:bg-white text-gray-700 p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-all shrink-0"
+                        >
+                            <ChevronRight size={28} strokeWidth={3} />
                         </button>
                     </div>
                 </div>
