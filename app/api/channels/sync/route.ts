@@ -52,11 +52,11 @@ export async function POST() {
                         .eq('youtube_channel_id', channel.youtube_channel_id)
                 }
 
-                // Get Videos (last 20)
+                // Get Videos (last 50 to catch more new uploads)
                 const playlistRes = await youtube.playlistItems.list({
                     part: ['snippet'],
                     playlistId: uploadsId,
-                    maxResults: 20
+                    maxResults: 50
                 })
 
                 const fetchedItems = playlistRes.data.items || []
