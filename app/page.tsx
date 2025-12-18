@@ -94,6 +94,7 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           e.stopPropagation()
           onRename()
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         className="absolute -top-2 right-6 bg-blue-400 text-white p-1 rounded-full shadow-md hover:bg-blue-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 이름 변경"
       >
@@ -104,6 +105,7 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           e.stopPropagation()
           onDelete()
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         className="absolute -top-2 -right-2 bg-red-400 text-white p-1 rounded-full shadow-md hover:bg-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 삭제"
       >
@@ -501,10 +503,10 @@ export default function Home() {
     try {
       setLoading(true)
 
-      // 1. Update 'channels' table
+      // 1. Update 'channels' table (update both 'name' and 'title' for compatibility)
       const { error: channelError } = await supabase
         .from('channels')
-        .update({ title: newName })
+        .update({ title: newName, name: newName })
         .eq('title', oldName)
 
       if (channelError) throw channelError

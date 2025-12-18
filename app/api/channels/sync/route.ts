@@ -19,9 +19,25 @@ export async function POST() {
             .from('channels')
             .select('*')
 
-        if (channelsError) throw channelsError
+        if (channelsError) {
+            console.error('Channels query error:', channelsError)
+            return NextResponse.json({
+                error: 'Failed to query channels',
+                details: channelsError.message,
+                hint: channelsError.hint || 'Check if channels table exists',
+                newVideos: 0
+            }, { status: 500 })
+        }
+
         if (!channels || channels.length === 0) {
-            return NextResponse.json({ message: 'No channels to sync', newVideos: 0 })
+            return NextResponse.json({
+                message: 'No channels to sync',
+                newVideos: 0,
+                debug: {
+                    channelsFound: 0,
+                    hint: 'Add a YouTube channel URL using the "영상 추가" button to register channels for auto-sync'
+                }
+            })
         }
 
         const apiKey = process.env.YOUTUBE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
@@ -95,11 +111,13 @@ export async function POST() {
                             .single()
 
                         if (!existing) {
+                            // Use 'name' or 'title' field, whichever exists
+                            const channelDisplayName = channel.name || channel.title || 'Unknown Channel'
                             await supabase.from('videos').insert({
                                 title: video.snippet?.title,
                                 url: videoUrl,
                                 thumbnail_url: video.snippet?.thumbnails?.high?.url || video.snippet?.thumbnails?.medium?.url,
-                                channel_name: channel.name,
+                                channel_name: channelDisplayName,
                                 published_at: video.snippet?.publishedAt
                             })
                             totalNewVideos++
@@ -114,7 +132,11 @@ export async function POST() {
 
         return NextResponse.json({
             message: `Sync complete. Added ${totalNewVideos} new videos.`,
-            newVideos: totalNewVideos
+            newVideos: totalNewVideos,
+            debug: {
+                channelCount: channels.length,
+                channelNames: channels.map((c: any) => c.name)
+            }
         })
 
     } catch (error: any) {

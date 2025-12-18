@@ -31,15 +31,23 @@ on conflict (username) do update set
   status = 'approved',
   is_admin = true;
 
--- 2. Channels Table
+-- 2. Channels Table (Updated for auto-sync)
 create table if not exists channels (
   id uuid default uuid_generate_v4() primary key,
-  channel_id text unique not null,
-  title text not null,
+  channel_id text unique,
+  youtube_channel_id text unique,
+  title text,
+  name text,
   custom_url text,
   thumbnail_url text,
+  uploads_playlist_id text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- Add missing columns to existing channels table
+alter table channels add column if not exists youtube_channel_id text;
+alter table channels add column if not exists name text;
+alter table channels add column if not exists uploads_playlist_id text;
 
 -- 3. Videos Table (Updated)
 create table if not exists videos (
