@@ -171,6 +171,7 @@ export default function Home() {
         const { data: videosData, error: videoError } = await supabase
           .from('videos')
           .select('*')
+          .eq('is_deleted', false)  // Only fetch non-deleted videos
           .order('published_at', { ascending: false, nullsFirst: false })
           .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -427,64 +428,45 @@ export default function Home() {
   }
 
 
-  // Delete channel and all its videos
+  // Delete channel and all its videos (soft delete - preserves watch history)
   const handleDeleteChannel = async (channelName: string) => {
-    const confirmed = window.confirm(`"${channelName}" 채널과 해당 채널의 모든 영상을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)
+    const confirmed = window.confirm(`"${channelName}" 채널을 삭제하시겠습니까?\n\n(시청 기록은 보존되며, 채널을 다시 등록하면 복원됩니다)`)
 
     if (!confirmed) return
 
-    // Show loading indicator
-    const loadingAlert = window.confirm('삭제 중입니다... (확인을 누르면 백그라운드에서 진행됩니다)')
-
     try {
-      // Get all video IDs for this channel
-      const channelVideos = videos.filter(v => v.channel_name === channelName)
-      const videoIds = channelVideos.map(v => v.id)
+      setLoading(true)
 
-      if (videoIds.length === 0) {
-        alert('삭제할 영상이 없습니다.')
-        return
-      }
-
-      // Delete watch logs in batch (much faster!)
-      if (videoIds.length > 0) {
-        const { error: logError } = await supabase
-          .from('watch_logs')
-          .delete()
-          .in('video_id', videoIds)
-
-        // Watch logs might not exist - that's okay, ignore error
-        // (no logs to delete is a normal situation)
-      }
-
-      // Delete all videos with this channel_name
+      // Soft delete: mark videos as deleted instead of actually deleting
       const { error: videoError } = await supabase
         .from('videos')
-        .delete()
+        .update({ is_deleted: true })
         .eq('channel_name', channelName)
 
       if (videoError) {
-        console.error('Videos delete error:', videoError)
+        console.error('Videos soft delete error:', videoError)
         throw new Error('영상 삭제 실패: ' + videoError.message)
       }
 
-      // Delete channel from channels table
+      // Delete channel from channels table (search by both name and title)
       const { error: channelError } = await supabase
         .from('channels')
         .delete()
-        .eq('title', channelName)
+        .or(`name.eq.${channelName},title.eq.${channelName}`)
 
       if (channelError) {
         console.warn('Channel table delete:', channelError.message)
       }
 
       // Success!
-      alert(`"${channelName}" 채널이 성공적으로 삭제되었습니다.`)
-      window.location.reload()
+      alert(`"${channelName}" 채널이 삭제되었습니다.\n(다시 등록하면 시청 기록이 복원됩니다)`)
+      await fetchData()
 
     } catch (error: any) {
       console.error('Error deleting channel:', error)
       alert('❌ 채널 삭제 실패\n\n' + (error?.message || '알 수 없는 오류가 발생했습니다.'))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -504,10 +486,11 @@ export default function Home() {
       setLoading(true)
 
       // 1. Update 'channels' table (update both 'name' and 'title' for compatibility)
+      // Search by both 'name' and 'title' to handle legacy data
       const { error: channelError } = await supabase
         .from('channels')
         .update({ title: newName, name: newName })
-        .eq('title', oldName)
+        .or(`name.eq.${oldName},title.eq.${oldName}`)
 
       if (channelError) throw channelError
 
@@ -567,6 +550,39 @@ export default function Home() {
       }
     }
   }, [])
+
+  // Manual sync - refresh button handler
+  const handleManualSync = async () => {
+    if (syncStatus === 'syncing') return // Prevent double-click
+
+    try {
+      setSyncStatus('syncing')
+      const syncRes = await fetch('/api/channels/sync', { method: 'POST' })
+      const syncData = await syncRes.json()
+      setSyncStatus('done')
+
+      if (syncData.newVideos > 0) {
+        setNewVideosCount(syncData.newVideos)
+        setShowSyncToast(true)
+        await fetchData() // Refresh data to show new videos
+
+        // Hide toast after 4 seconds
+        setTimeout(() => {
+          setShowSyncToast(false)
+        }, 4000)
+      } else {
+        // Show "no new videos" toast briefly
+        setNewVideosCount(0)
+        setShowSyncToast(true)
+        setTimeout(() => {
+          setShowSyncToast(false)
+        }, 2000)
+      }
+    } catch (err) {
+      console.error('Manual sync failed', err)
+      setSyncStatus('idle')
+    }
+  }
 
   // Handle drag end - reorder channels
   const handleDragEnd = (event: DragEndEvent) => {
@@ -656,13 +672,29 @@ export default function Home() {
               <span className="font-extrabold text-xs md:text-base">{streak}</span>
               <span className="hidden sm:inline text-[10px] md:text-xs font-bold">일 연속</span>
             </div>
-            {/* Sync Status Indicator */}
-            {syncStatus === 'syncing' && (
-              <div className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 bg-blue-100 border-2 border-blue-300 rounded-full shadow-md">
-                <Loader2 size={14} className="animate-spin text-blue-600" />
-                <span className="text-[10px] md:text-xs font-bold text-blue-600 hidden sm:inline">동기화 중...</span>
-              </div>
-            )}
+            {/* Sync Refresh Button */}
+            <button
+              onClick={handleManualSync}
+              disabled={syncStatus === 'syncing'}
+              className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all ${
+                syncStatus === 'syncing'
+                  ? 'bg-blue-100 border-2 border-blue-300 cursor-not-allowed'
+                  : 'bg-[#fffaeb] border-2 border-[#e6dcc8] hover:bg-white hover:border-blue-400 hover:shadow-lg active:scale-95'
+              }`}
+              title="새 영상 확인"
+            >
+              {syncStatus === 'syncing' ? (
+                <>
+                  <Loader2 size={14} className="animate-spin text-blue-600 md:w-4 md:h-4" />
+                  <span className="text-[10px] md:text-xs font-bold text-blue-600 hidden sm:inline">동기화 중...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={14} className="text-[#8b5e3c] md:w-4 md:h-4" />
+                  <span className="text-[10px] md:text-xs font-bold text-[#8b5e3c] hidden sm:inline">새 영상 확인</span>
+                </>
+              )}
+            </button>
             <button
               onClick={() => setEmblemModalOpen(true)}
               className="flex items-center gap-1 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-2 md:px-4 py-1 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
@@ -696,14 +728,29 @@ export default function Home() {
         </div>
       </header>
 
-      {/* New Videos Toast */}
-      {showSyncToast && newVideosCount > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-bounce">
-          <div className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-3 rounded-full shadow-lg shadow-green-300/50 border-2 border-white">
-            <Sparkles size={18} className="animate-pulse" />
-            <span className="font-bold text-sm md:text-base">
-              🎉 새 영상 {newVideosCount}개가 추가되었습니다!
-            </span>
+      {/* Sync Toast */}
+      {showSyncToast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${newVideosCount > 0 ? 'animate-bounce' : ''}`}>
+          <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg border-2 border-white ${
+            newVideosCount > 0
+              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-green-300/50'
+              : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-300/50'
+          }`}>
+            {newVideosCount > 0 ? (
+              <>
+                <Sparkles size={18} className="animate-pulse" />
+                <span className="font-bold text-sm md:text-base">
+                  🎉 새 영상 {newVideosCount}개가 추가되었습니다!
+                </span>
+              </>
+            ) : (
+              <>
+                <RefreshCw size={18} />
+                <span className="font-bold text-sm md:text-base">
+                  새로운 영상이 없습니다
+                </span>
+              </>
+            )}
             <button
               onClick={() => setShowSyncToast(false)}
               className="ml-2 p-1 hover:bg-white/20 rounded-full transition-all"

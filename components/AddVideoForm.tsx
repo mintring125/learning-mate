@@ -126,31 +126,97 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
       setStatus('importing')
       setStatusMessage(`${videos.length}개 영상을 등록하는 중...`)
 
-      // Prepare videos for insertion
-      const videosToInsert = videos.map((v: any) => ({
-        title: v.title,
-        channel_name: v.channel_name,
-        url: `https://www.youtube.com/watch?v=${v.id}`,
-        thumbnail_url: v.thumbnail_url,
-        published_at: v.published_at // YouTube upload date
-      }))
+      // Check for existing deleted videos to restore
+      const videoUrls = videos.map((v: any) => `https://www.youtube.com/watch?v=${v.id}`)
+      console.log('[AddVideoForm] Looking for deleted videos, URLs count:', videoUrls.length)
 
-      // Insert all videos
-      const { error } = await supabase.from('videos').insert(videosToInsert)
-      if (error) throw error
+      // Process in batches of 30 to avoid URL length limits
+      const BATCH_SIZE = 30
+      const restoredUrls = new Set<string>()
+      const existingUrls = new Set<string>()
+
+      for (let i = 0; i < videoUrls.length; i += BATCH_SIZE) {
+        const batchUrls = videoUrls.slice(i, i + BATCH_SIZE)
+
+        // Find deleted videos in this batch
+        const { data: deletedVideos, error: findError } = await supabase
+          .from('videos')
+          .select('id, url, channel_name')
+          .in('url', batchUrls)
+          .eq('is_deleted', true)
+
+        if (findError) {
+          console.error('[AddVideoForm] Find error:', findError)
+        } else if (deletedVideos && deletedVideos.length > 0) {
+          console.log('[AddVideoForm] Found deleted videos in batch:', deletedVideos.length)
+
+          // Restore deleted videos
+          const { error: restoreError } = await supabase
+            .from('videos')
+            .update({ is_deleted: false })
+            .in('url', deletedVideos.map(v => v.url))
+
+          if (restoreError) {
+            console.error('[AddVideoForm] Restore error:', restoreError)
+          } else {
+            deletedVideos.forEach(v => restoredUrls.add(v.url))
+          }
+        }
+
+        // Find existing active videos in this batch
+        const { data: existingVideos } = await supabase
+          .from('videos')
+          .select('url')
+          .in('url', batchUrls)
+          .eq('is_deleted', false)
+
+        existingVideos?.forEach(v => existingUrls.add(v.url))
+      }
+
+      console.log('[AddVideoForm] Total restored:', restoredUrls.size, 'Total existing:', existingUrls.size)
+
+      // Filter to only new videos (not existing and not restored)
+      const videosToInsert = videos
+        .filter((v: any) => {
+          const url = `https://www.youtube.com/watch?v=${v.id}`
+          return !existingUrls.has(url) && !restoredUrls.has(url)
+        })
+        .map((v: any) => ({
+          title: v.title,
+          channel_name: v.channel_name,
+          url: `https://www.youtube.com/watch?v=${v.id}`,
+          thumbnail_url: v.thumbnail_url,
+          published_at: v.published_at,
+          is_deleted: false
+        }))
+
+      // Insert only new videos
+      if (videosToInsert.length > 0) {
+        const { error } = await supabase.from('videos').insert(videosToInsert)
+        if (error) throw error
+      }
 
       // Register channel for auto-sync
       if (data.channel) {
         await supabase.from('channels').upsert({
+          channel_id: data.channel.id,  // 필수 컬럼
           youtube_channel_id: data.channel.id,
           name: data.channel.title,
+          title: data.channel.title,
           uploads_playlist_id: data.channel.uploadsPlaylistId
         }, { onConflict: 'youtube_channel_id' })
       }
 
+      const totalCount = videosToInsert.length + restoredUrls.size
+      const restoredCount = restoredUrls.size
+
       setStatus('success')
-      setStatusMessage(`${videos.length}개 영상이 등록되었습니다!`)
-      setImportCount(videos.length)
+      if (restoredCount > 0) {
+        setStatusMessage(`${restoredCount}개 영상 복원, ${videosToInsert.length}개 신규 등록!`)
+      } else {
+        setStatusMessage(`${videosToInsert.length}개 영상이 등록되었습니다!`)
+      }
+      setImportCount(totalCount)
 
       setTimeout(() => {
         setIsOpen(false)
