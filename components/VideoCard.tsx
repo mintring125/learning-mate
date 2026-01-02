@@ -41,57 +41,58 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
   return (
     <div
       onClick={() => onPlay(video)}
-      className={`relative bg-white rounded-[2rem] border-4 shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:translate-y-1 hover:shadow-[0_3px_0_rgba(0,0,0,0.1)] transition-all overflow-hidden flex flex-col h-full cursor-pointer group ${isWatched
-        ? 'border-[#74c74a] shadow-[0_6px_0_#589e36] bg-emerald-50'
-        : 'border-[#e6dcc8] shadow-[0_6px_0_#d4c5a9]'
+      className={`relative bg-white rounded-xl border hover:shadow-md transition-all overflow-hidden flex flex-col h-full cursor-pointer group ${isWatched
+        ? 'border-emerald-200 bg-emerald-50/30'
+        : 'border-slate-200'
         }`}
     >
       {/* Thumbnail */}
-      <div className="relative h-40 bg-[#f0ede6] m-2 rounded-[1.5rem] overflow-hidden border-2 border-[#e6dcc8]">
+      <div className="relative aspect-video bg-slate-100 overflow-hidden">
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}
             alt={video.title}
-            className={`w-full h-full object-cover ${isWatched ? 'opacity-80 grayscale-[30%]' : ''}`}
+            className={`w-full h-full object-cover ${isWatched ? 'opacity-75' : ''}`}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-[#d4c5a9]">
+          <div className="flex items-center justify-center h-full text-slate-300">
             <Youtube size={40} />
           </div>
         )}
 
         {/* NEW Badge */}
         {isNew && (
-          <div className="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white flex items-center gap-1 animate-bounce shadow-md border-2 border-white">
-            <Sparkles size={12} className="fill-white" />
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500 text-white flex items-center gap-1">
+            <Sparkles size={10} />
             NEW
           </div>
         )}
 
         {/* Watch status badge */}
-        <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold border-2 border-white shadow-md flex items-center gap-1 ${isWatched ? 'bg-[#74c74a] text-white' : 'bg-slate-800/80 text-white'
-          }`}>
-          {isWatched ? <CheckCircle2 size={12} className="stroke-[3]" /> : null}
-          {isWatched ? '완료!' : '미시청'}
-        </div>
+        {isWatched && (
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 text-white flex items-center gap-1">
+            <CheckCircle2 size={10} />
+            완료
+          </div>
+        )}
 
         {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <div className="bg-white/90 p-3 rounded-full shadow-lg transform scale-0 group-hover:scale-110 transition-transform duration-300">
-            <Play className="text-[#74c74a] fill-[#74c74a] translate-x-0.5" size={28} />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+          <div className="bg-white p-3 rounded-full shadow-lg transform scale-0 group-hover:scale-100 transition-transform duration-200">
+            <Play className="text-emerald-500 fill-emerald-500 translate-x-0.5" size={24} />
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-5 pb-5 pt-2 flex-1 flex flex-col">
-        <h3 className="font-bold text-[#5d4037] line-clamp-2 text-sm mb-4 leading-relaxed" title={video.title}>
+      <div className="p-4 flex-1 flex flex-col">
+        <h3 className="font-medium text-slate-800 line-clamp-2 text-sm mb-3 leading-snug" title={video.title}>
           {video.title}
         </h3>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs font-bold text-[#9c826b] mb-4 bg-[#fdfbf7] p-2 rounded-lg border border-[#e6dcc8]">
-          <span>{isWatched ? '🌿 시청 완료' : '🍂 시청 전'}</span>
+        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+          <span className={isWatched ? 'text-emerald-600' : ''}>{isWatched ? '시청 완료' : '미시청'}</span>
           <span>
             {video.last_watched_at
               ? new Date(video.last_watched_at).toLocaleDateString('ko-KR')
@@ -104,25 +105,25 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
           <button
             onClick={handleToggle}
             disabled={loading}
-            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
-              ? 'bg-[#e2f2da] text-[#589e36] border-[#589e36] hover:bg-[#d4edc9]'
-              : 'bg-white text-[#9c826b] border-[#e6dcc8] hover:bg-[#fffaeb]'
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-medium transition-all text-xs ${isWatched
+              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
           >
             {loading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : isWatched ? (
-              <CheckCircle2 size={16} strokeWidth={2.5} />
+              <CheckCircle2 size={14} />
             ) : (
-              <Circle size={16} strokeWidth={2.5} />
+              <Circle size={14} />
             )}
             {isWatched ? '완료' : '체크'}
           </button>
           <button
             onClick={handleOpenNotes}
-            className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 bg-amber-100 text-amber-700 border-amber-400 hover:bg-amber-200"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-medium transition-all text-xs bg-amber-50 text-amber-700 hover:bg-amber-100"
           >
-            <StickyNote size={16} strokeWidth={2.5} />
+            <StickyNote size={14} />
             메모
           </button>
         </div>
@@ -130,3 +131,4 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
     </div>
   )
 }
+

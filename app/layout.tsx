@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const varelaRound = Varela_Round({
-  weight: "400",
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-varela-round",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -33,18 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased bg-slate-50`}
       >
-        <div
-          className="mx-auto max-w-6xl 2xl:max-w-[1600px] w-full min-h-screen shadow-2xl relative"
-          style={{
-            backgroundImage: "url('/assets/theme/background_scene.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+        <div className="mx-auto max-w-6xl 2xl:max-w-[1600px] w-full min-h-screen bg-white shadow-sm">
           <AuthProvider>{children}</AuthProvider>
         </div>
       </body>

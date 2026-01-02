@@ -70,22 +70,21 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
     >
       <button
         onClick={onSelect}
-        className={`px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-black rounded-t-xl md:rounded-t-2xl transition-all flex items-center gap-1.5 md:gap-2 border-t-2 md:border-t-4 border-x-2 md:border-x-4 ${isActive
-          ? 'bg-[#e6dcc8] border-[#d4c5a9] text-[#5d4037] translate-y-[2px] md:translate-y-[4px]'
-          : 'bg-[#fffaeb] border-transparent text-[#9c826b] hover:bg-[#fff0c7]'
+        className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 md:gap-2 ${isActive
+          ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
           }`}
-        style={isActive ? { backgroundImage: "url('/assets/theme/wood_texture_light.png')", backgroundSize: '150px' } : {}}
       >
         {/* Drag Handle */}
         <span
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-[#b09b86] hover:text-[#8b5e3c] touch-none"
+          className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 touch-none"
         >
-          <GripVertical size={14} className="md:w-4 md:h-4" />
+          <GripVertical size={14} />
         </span>
-        <span className="max-w-[80px] md:max-w-[120px] truncate drop-shadow-sm">{channelName}</span>
-        <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#74c74a] text-white shadow-inner' : 'bg-[#e6dcc8] text-[#8b5e3c]'}`}>
+        <span className="max-w-[80px] md:max-w-[120px] truncate">{channelName}</span>
+        <span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
           {watched}/{total}
         </span>
       </button>
@@ -95,10 +94,10 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           onRename()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-2 right-6 bg-blue-400 text-white p-1 rounded-full shadow-md hover:bg-blue-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="absolute -top-1 right-5 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 이름 변경"
       >
-        <Edit2 size={12} strokeWidth={3} />
+        <Edit2 size={10} strokeWidth={2.5} />
       </button>
       <button
         onClick={(e) => {
@@ -106,10 +105,10 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           onDelete()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-2 -right-2 bg-red-400 text-white p-1 rounded-full shadow-md hover:bg-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-sm hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 삭제"
       >
-        <X size={12} strokeWidth={3} />
+        <X size={10} strokeWidth={2.5} />
       </button>
     </div>
   )
@@ -626,100 +625,93 @@ export default function Home() {
   const progressPercent = totalInChannel > 0 ? Math.round((watchedInChannel / totalInChannel) * 100) : 0
 
   // Loading/Auth check
-  if (authLoading || !user) {
+  if (loading || authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#74c74a] border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pb-20 font-sans">
+    <div className="min-h-screen pb-20">
       {/* Header */}
-      <header
-        className="sticky top-0 z-40 shadow-xl"
-        style={{
-          backgroundImage: "url('/assets/theme/wood_texture_dark.png')",
-          backgroundSize: '300px',
-          borderBottom: '4px solid #5d4037'
-        }}
-      >
-        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-2 md:px-4 py-1.5 md:py-0 flex flex-row items-center justify-between gap-2 md:gap-4 md:h-20 h-auto">
-          <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
-            <div className="bg-amber-400 p-[2px] rounded-full border-2 md:border-4 border-white shadow-lg overflow-hidden w-8 h-8 md:w-16 md:h-16 relative">
-              <img src="/assets/theme/teacher_avatar.jpg" className="w-full h-full object-cover rounded-full" alt="Teacher Avatar" />
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-3 md:px-6 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-lg">L</span>
             </div>
-            <h1 className="hidden md:block text-sm md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] whitespace-nowrap" style={{ textShadow: '2px 2px 0 #5d4037' }}>
-              형석쌤 공부용 사이트
+            <h1 className="hidden md:block text-lg font-semibold text-slate-800">
+              Learning Mate
             </h1>
           </div>
 
-          <div className="flex items-center gap-1.5 md:gap-3 text-sm">
-            <div className={`flex items-center gap-1 px-2 md:px-4 py-1 md:py-2 rounded-full transition-all border-2 ${streak > 0 ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-gray-100 border-gray-300 text-gray-500'} shadow-md`}>
-              <Flame size={14} className={`md:w-4 md:h-4 ${streak > 0 ? "fill-orange-500 text-orange-500" : ""}`} />
-              <span className="font-extrabold text-xs md:text-base">{streak}</span>
-              <span className="hidden sm:inline text-[10px] md:text-xs font-bold">일 연속</span>
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Streak Badge */}
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${streak > 0
+              ? 'bg-amber-50 text-amber-600 border border-amber-200'
+              : 'bg-slate-100 text-slate-500 border border-slate-200'
+              }`}>
+              <Flame size={16} className={streak > 0 ? "fill-amber-500 text-amber-500" : ""} />
+              <span className="font-bold">{streak}</span>
+              <span className="hidden sm:inline text-xs opacity-70">일</span>
             </div>
-            {/* Sync Refresh Button */}
+
+            {/* Sync Button */}
             <button
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
-              className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all ${syncStatus === 'syncing'
-                ? 'bg-blue-100 border-2 border-blue-300 cursor-not-allowed'
-                : 'bg-[#fffaeb] border-2 border-[#e6dcc8] hover:bg-white hover:border-blue-400 hover:shadow-lg active:scale-95'
+              className={`p-2 rounded-lg transition-all ${syncStatus === 'syncing'
+                ? 'bg-blue-50 text-blue-500'
+                : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
               title="새 영상 확인"
             >
               {syncStatus === 'syncing' ? (
-                <>
-                  <Loader2 size={14} className="animate-spin text-blue-600 md:w-4 md:h-4" />
-                  <span className="text-[10px] md:text-xs font-bold text-blue-600 hidden sm:inline">동기화 중...</span>
-                </>
+                <Loader2 size={18} className="animate-spin" />
               ) : (
-                <>
-                  <RefreshCw size={14} className="text-[#8b5e3c] md:w-4 md:h-4" />
-                  <span className="text-[10px] md:text-xs font-bold text-[#8b5e3c] hidden sm:inline">새 영상 확인</span>
-                </>
+                <RefreshCw size={18} />
               )}
             </button>
+
             {/* Add Video Button */}
             <button
               onClick={() => setShowAddVideoModal(true)}
-              className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all bg-[#74c74a] border-2 border-[#589e36] hover:bg-[#68b642] hover:shadow-lg active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-sm transition-all shadow-sm"
               title="영상 추가"
             >
-              <Plus size={14} className="text-white md:w-4 md:h-4" strokeWidth={3} />
-              <span className="text-[10px] md:text-xs font-bold text-white hidden sm:inline">영상 추가</span>
+              <Plus size={16} strokeWidth={2.5} />
+              <span className="hidden sm:inline">추가</span>
             </button>
+
+            {/* Profile Button */}
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-1 md:gap-2 bg-[#fffaeb] border-2 border-[#e6dcc8] text-[#8b5e3c] hover:bg-white hover:border-amber-400 hover:text-amber-600 px-2 md:px-4 py-1 md:py-2 rounded-2xl transition-all cursor-pointer shadow-md"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-all"
             >
-              {hasWeeklyEmblem(streak) && (
-                <div className="relative hidden sm:block">
-                  <img
-                    src="/img_bonus/BONUS.jpg"
-                    alt="Weekly Emblem"
-                    className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover border-2 border-amber-400 shadow-sm"
-                  />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <Trophy size={6} className="text-yellow-800" />
-                  </div>
-                </div>
-              )}
-              <UserCircle size={16} className="text-amber-500 md:w-5 md:h-5" />
-              <span className="font-bold text-[10px] md:text-sm max-w-[60px] md:max-w-none truncate">{user.username}</span>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+                <UserCircle size={18} className="text-slate-600" />
+              </div>
+              <span className="hidden md:inline text-sm font-medium text-slate-700">{user.username}</span>
             </button>
+
+            {/* Settings */}
             <Link
               href="/change-password"
-              className="p-1 md:p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
               title="비밀번호 변경"
             >
-              <Key size={14} className="md:w-[18px] md:h-[18px]" />
+              <Key size={18} />
             </Link>
-            <button onClick={logout} className="p-1 md:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="로그아웃">
-              <LogOut size={14} className="md:w-[18px] md:h-[18px]" />
+
+            {/* Logout */}
+            <button
+              onClick={logout}
+              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="로그아웃"
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -759,10 +751,10 @@ export default function Home() {
 
       <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-4 md:py-8">
         {/* Channel Tabs & Content */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
-            <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-2 md:mx-4 mt-2 md:mt-6 scrollbar-hide">
+            <div className="border-b border-slate-200 overflow-x-auto bg-slate-50 scrollbar-hide">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -772,7 +764,7 @@ export default function Home() {
                   items={channelNames}
                   strategy={horizontalListSortingStrategy}
                 >
-                  <div className="flex px-2 md:px-4 pt-2 md:pt-4 gap-1 md:gap-2">
+                  <div className="flex px-2 md:px-4 py-2 gap-1 md:gap-2">
                     {channelNames.map((channelName) => {
                       const channelVideos = channelData[channelName]
                       const watched = channelVideos.filter(v => v.watch_count > 0).length
@@ -800,55 +792,52 @@ export default function Home() {
 
           {/* Progress Bar & Filters */}
           {activeChannel && totalInChannel > 0 && (
-            <div className="mx-2 md:mx-4 bg-[#fdfbf7] border-x-4 border-b-4 border-[#e6dcc8] rounded-b-[2rem] p-3 md:p-6 mb-4 md:mb-6 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 mb-2 md:mb-4">
+            <div className="px-4 md:px-6 py-4 bg-white border-b border-slate-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                 {/* Filter Buttons */}
-                <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                  <div className="bg-[#e6dcc8] p-1 md:p-1.5 rounded-full text-[#8b5e3c] shrink-0">
-                    <Filter size={14} className="md:w-4 md:h-4" />
-                  </div>
-                  <div className="flex bg-[#e6dcc8]/30 p-1 rounded-full shrink-0">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                  <div className="flex bg-slate-100 p-1 rounded-lg">
                     <button
                       onClick={() => setFilterType('all')}
-                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'all'
-                        ? 'bg-[#74c74a] text-white shadow-md'
-                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'all'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                         }`}
                     >
                       전체 ({totalInChannel})
                     </button>
                     <button
                       onClick={() => setFilterType('unwatched')}
-                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'unwatched'
-                        ? 'bg-orange-400 text-white shadow-md'
-                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'unwatched'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                         }`}
                     >
                       미시청 ({totalInChannel - watchedInChannel})
                     </button>
                     <button
                       onClick={() => setFilterType('watched')}
-                      className={`px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold rounded-full transition-all whitespace-nowrap ${filterType === 'watched'
-                        ? 'bg-[#74c74a] text-white shadow-md'
-                        : 'text-[#8b5e3c] hover:bg-[#e6dcc8]/50'
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'watched'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                         }`}
                     >
-                      시청 완료 ({watchedInChannel})
+                      완료 ({watchedInChannel})
                     </button>
                   </div>
                 </div>
 
                 {/* Progress Text */}
-                <div className="text-right flex items-center justify-end gap-2 md:block">
-                  <span className="text-xs md:text-sm font-bold text-[#8b5e3c] mr-2">진행률</span>
-                  <span className="text-sm md:text-lg font-black text-[#74c74a]">{progressPercent}%</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">진행률</span>
+                  <span className="text-sm font-semibold text-emerald-600">{progressPercent}%</span>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="h-3 md:h-5 bg-[#e6dcc8] rounded-full overflow-hidden p-0.5 md:p-1 shadow-inner">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[repeating-linear-gradient(45deg,#74c74a,#74c74a_10px,#68b642_10px,#68b642_20px)] rounded-full transition-all duration-500 ease-out border-2 border-[#86c95c]"
+                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

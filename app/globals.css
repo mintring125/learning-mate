@@ -1,20 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  /* Minimal White Theme */
+  --background: #ffffff;
+  --background-subtle: #f8fafc;
   --foreground: #0f172a;
-  --wood-light: #e8d0a9;
-  --wood-dark: #8b5e3c;
-  --leaf-green: #74c74a;
+  --foreground-muted: #64748b;
+  
+  /* Primary - Emerald (학습 완료) */
+  --primary: #10b981;
+  --primary-light: #d1fae5;
+  --primary-dark: #059669;
+  
+  /* Secondary - Blue (액션) */
+  --secondary: #3b82f6;
+  --secondary-light: #dbeafe;
+  
+  /* Accent - Amber (보상/스트릭) */
+  --accent: #f59e0b;
+  --accent-light: #fef3c7;
+  
+  /* Borders & Surfaces */
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --surface: #f8fafc;
 }
 
 @theme inline {
-  --font-sans: var(--font-varela-round), sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background-color: #262626;
+  background-color: var(--background-subtle);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--border-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-muted);
 }
