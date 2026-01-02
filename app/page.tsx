@@ -639,8 +639,17 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-lg border-b border-[#e8e4db] supports-[backdrop-filter]:bg-white/60">
         <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#6b9e78] to-[#4a7a58] flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(107,158,120,0.3)]">
-              <span className="text-white font-bold text-xl font-sans tracking-tight">L</span>
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden relative group cursor-pointer hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/theme/teacher_avatar.jpg"
+                alt="Teacher Avatar"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.parentElement!.classList.add('bg-gradient-to-br', 'from-[#6b9e78]', 'to-[#4a7a58]', 'flex', 'items-center', 'justify-center')
+                  e.currentTarget.parentElement!.innerHTML = '<span class="text-white font-bold text-xl font-sans tracking-tight">L</span>'
+                }}
+              />
             </div>
             <h1 className="hidden md:block text-lg font-bold text-[#4a4a4a] tracking-tight">
               Learning Mate
