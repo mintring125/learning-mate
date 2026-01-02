@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Trophy, Lock, Star, Calendar, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Trophy, Lock, Star, Calendar, Sparkles, ChevronLeft, ChevronRight, CalendarCheck, TrendingUp } from 'lucide-react'
 import Image from 'next/image'
 
 interface EmblemType {
@@ -15,6 +15,8 @@ interface EmblemModalProps {
     streak: number
     earnedEmblems: string[] // List of earned emblem dates (week end dates)
     username: string
+    todayWatched?: boolean
+    totalWatchCount?: number
 }
 
 // Check if user has earned 7-day streak emblem for current week
@@ -36,7 +38,7 @@ export const getCurrentWeekNumber = (): number => {
     return Math.ceil(diff / oneWeek)
 }
 
-export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, username }: EmblemModalProps) {
+export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, username, todayWatched, totalWatchCount }: EmblemModalProps) {
     const [emblems, setEmblems] = useState<EmblemType[]>([])
     const [loading, setLoading] = useState(true)
     const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null) // For zoom view with index
@@ -134,6 +136,40 @@ export default function EmblemModal({ isOpen, onClose, streak, earnedEmblems, us
                         </button>
                     </div>
                 </div>
+
+                {/* Quick Stats */}
+                {(todayWatched !== undefined || totalWatchCount !== undefined) && (
+                    <div className="px-6 py-4 border-b-4 border-[#e6dcc8] border-dashed bg-[#f0ede6]">
+                        <div className="flex justify-around gap-4">
+                            {todayWatched !== undefined && (
+                                <div className="flex items-center gap-2">
+                                    <div className={`p-2 rounded-xl ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                        <CalendarCheck size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-[#8b5e3c] font-bold opacity-70">오늘의 학습</p>
+                                        <p className={`text-sm font-black ${todayWatched ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                            {todayWatched ? '완료!' : '아직...'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            {totalWatchCount !== undefined && (
+                                <div className="flex items-center gap-2">
+                                    <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+                                        <TrendingUp size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-[#8b5e3c] font-bold opacity-70">총 시청</p>
+                                        <p className="text-sm font-black text-[#5d4037]">
+                                            {totalWatchCount}회
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* This Week's Progress */}
                 <div className="p-6 border-b-4 border-[#e6dcc8] border-dashed">

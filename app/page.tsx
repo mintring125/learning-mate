@@ -10,7 +10,7 @@ import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
 
 import VideoPlayerModal from '@/components/VideoPlayerModal'
-import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles } from 'lucide-react'
+import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles, Plus } from 'lucide-react'
 import { subDays } from 'date-fns'
 import EmblemModal, { hasWeeklyEmblem, getCurrentWeekNumber } from '@/components/EmblemModal'
 import Link from 'next/link'
@@ -136,6 +136,7 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done'>('idle')
   const [newVideosCount, setNewVideosCount] = useState(0)
   const [showSyncToast, setShowSyncToast] = useState(false)
+  const [showAddVideoModal, setShowAddVideoModal] = useState(false)
   const prevTodayWatched = useRef<boolean | null>(null)
   const prevStreak = useRef<number | null>(null)
   const isInitialLoadComplete = useRef(false) // Flag to prevent effects on initial data load
@@ -649,7 +650,7 @@ export default function Home() {
             <div className="bg-amber-400 p-[2px] rounded-full border-2 md:border-4 border-white shadow-lg overflow-hidden w-8 h-8 md:w-16 md:h-16 relative">
               <img src="/assets/theme/teacher_avatar.jpg" className="w-full h-full object-cover rounded-full" alt="Teacher Avatar" />
             </div>
-            <h1 className="text-sm md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] whitespace-nowrap" style={{ textShadow: '2px 2px 0 #5d4037' }}>
+            <h1 className="hidden md:block text-sm md:text-2xl font-black text-amber-100 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] whitespace-nowrap" style={{ textShadow: '2px 2px 0 #5d4037' }}>
               형석쌤 공부용 사이트
             </h1>
           </div>
@@ -681,6 +682,15 @@ export default function Home() {
                   <span className="text-[10px] md:text-xs font-bold text-[#8b5e3c] hidden sm:inline">새 영상 확인</span>
                 </>
               )}
+            </button>
+            {/* Add Video Button */}
+            <button
+              onClick={() => setShowAddVideoModal(true)}
+              className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all bg-[#74c74a] border-2 border-[#589e36] hover:bg-[#68b642] hover:shadow-lg active:scale-95"
+              title="영상 추가"
+            >
+              <Plus size={14} className="text-white md:w-4 md:h-4" strokeWidth={3} />
+              <span className="text-[10px] md:text-xs font-bold text-white hidden sm:inline">영상 추가</span>
             </button>
             <button
               onClick={() => setEmblemModalOpen(true)}
@@ -747,78 +757,9 @@ export default function Home() {
         </div>
       )}
 
-      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-6 md:py-8">
-        {/* Stats Cards - Grid on Mobile (App Icons), Grid on Desktop (Cards) */}
-        <section className="grid grid-cols-3 gap-2 md:gap-6 mb-4 md:mb-8">
-          {/* Today's Learning Card */}
-          <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group h-full">
-            <div className="absolute top-0 left-0 w-full h-2 md:h-4 bg-[#e6dcc8]/30"></div>
-            <div className="p-2 md:p-5 flex flex-row items-center justify-start gap-2 md:gap-4 h-full text-left">
-              <div className={`p-2 md:p-4 rounded-xl md:rounded-2xl shadow-inner ${todayWatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                <CalendarCheck size={20} className="md:w-7 md:h-7" strokeWidth={2.5} />
-              </div>
-              <div>
-                <p className="text-[10px] md:text-sm font-bold text-[#8b5e3c] mb-0 md:mb-1 opacity-70 whitespace-nowrap">오늘의 학습</p>
-                <p className={`text-xs md:text-xl font-black ${todayWatched ? 'text-emerald-600' : 'text-slate-400'} whitespace-nowrap`}>{todayWatched ? '완료!' : '아직...'}</p>
-              </div>
-            </div>
-            {todayWatched && <div className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 opacity-20 rotate-12"><img src="/assets/theme/leaf_icon_green.png" className="w-8 h-8 md:w-24 md:h-24" /></div>}
-          </div>
-
-          {/* Weekly Emblem Card */}
-          <button
-            onClick={() => setEmblemModalOpen(true)}
-            className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden group hover:translate-y-1 hover:shadow-[0_4px_0_rgba(214,204,184,1)] transition-all cursor-pointer w-full text-center md:text-left h-full"
-          >
-            <div className="p-2 md:p-5 flex flex-row items-center justify-start gap-2 md:gap-4 relative z-10 h-full text-left">
-              <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl overflow-hidden shadow-md border-2 border-white ${streak >= 7 ? 'ring-2 ring-amber-400' : 'grayscale opacity-60'}`}>
-                <img
-                  src={currentWeekEmblem}
-                  alt="Weekly Emblem"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex flex-col items-start">
-                <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 whitespace-nowrap">이번 주 엠블럼</p>
-                <div className="flex items-center gap-1 md:gap-2">
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                      <div
-                        key={i}
-                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i <= Math.min(streak, 7) ? 'bg-green-500' : 'bg-gray-200'}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="hidden md:inline text-xs font-medium text-gray-600">{Math.min(streak, 7)}/7</span>
-                </div>
-              </div>
-            </div>
-          </button>
-
-          {/* Total Watch Card */}
-          <div className="bg-[#fdfbf7] p-1 rounded-2xl md:rounded-[2rem] shadow-[0_4px_0_rgba(214,204,184,1)] md:shadow-[0_8px_0_rgba(214,204,184,1)] border-2 md:border-4 border-[#e6dcc8] relative overflow-hidden h-full">
-            <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-amber-50 to-transparent"></div>
-            <div className="p-2 md:p-5 flex flex-row items-center justify-start relative z-10 h-full gap-2 md:gap-4 text-left">
-              <div className="text-left">
-                <div className="flex items-center justify-start gap-1 md:gap-2 mb-0 md:mb-1">
-                  <img src="/assets/theme/bell_bag_icon.png" className="w-3 h-3 md:w-5 md:h-5" />
-                  <p className="text-[10px] md:text-sm font-bold text-[#8b5e3c] opacity-70 whitespace-nowrap">총 시청</p>
-                </div>
-                <p className="text-lg md:text-3xl font-black text-[#5d4037]">
-                  {videos.reduce((acc, curr) => acc + curr.watch_count, 0)}
-                  <span className="text-xs md:text-lg font-bold opacity-60 ml-1">회</span>
-                </p>
-              </div>
-              <img src="/assets/theme/bell_bag_icon.png" className="w-8 h-8 md:w-16 md:h-16 opacity-20 absolute -right-1 -bottom-1 md:-right-2 md:-bottom-2 rotate-12" />
-            </div>
-          </div>
-        </section>
-
-        {/* Add Video Form */}
-        <AddVideoForm onVideoAdded={fetchData} />
-
+      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-4 md:py-8">
         {/* Channel Tabs & Content */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-2 md:mt-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
             <div className="border-b-4 border-[#e6dcc8] overflow-x-auto bg-[#fdfbf7] rounded-t-[2rem] mx-2 md:mx-4 mt-2 md:mt-6 scrollbar-hide">
@@ -978,7 +919,32 @@ export default function Home() {
         streak={streak}
         earnedEmblems={earnedEmblems}
         username={user?.username || 'User'}
+        todayWatched={todayWatched}
+        totalWatchCount={videos.reduce((acc, curr) => acc + curr.watch_count, 0)}
       />
+
+      {/* Add Video Modal */}
+      {showAddVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-800">영상 추가</h2>
+              <button
+                onClick={() => setShowAddVideoModal(false)}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              <AddVideoForm onVideoAdded={() => {
+                fetchData()
+                setShowAddVideoModal(false)
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Celebration Toast */}
       {showCelebration && (
