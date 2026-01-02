@@ -1,13 +1,14 @@
 'use client'
 
 import { VideoWithLog } from '@/types'
-import { Play, Youtube, Sparkles, CheckCircle2, Circle } from 'lucide-react'
+import { Play, Youtube, Sparkles, CheckCircle2, Circle, StickyNote } from 'lucide-react'
 import { useState } from 'react'
 
 interface VideoCardProps {
   video: VideoWithLog
   onToggleWatch: (id: string, isWatched: boolean) => Promise<void>
   onPlay: (video: VideoWithLog) => void
+  onOpenWithNotes?: (video: VideoWithLog) => void
 }
 
 // Check if video is less than 1 week old based on YouTube publish date
@@ -18,7 +19,7 @@ const isNewVideo = (publishedAt?: string): boolean => {
   return new Date(publishedAt) > oneWeekAgo
 }
 
-export default function VideoCard({ video, onToggleWatch, onPlay }: VideoCardProps) {
+export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNotes }: VideoCardProps) {
   const [loading, setLoading] = useState(false)
   const isWatched = video.watch_count > 0
   const isNew = isNewVideo(video.published_at)
@@ -28,6 +29,13 @@ export default function VideoCard({ video, onToggleWatch, onPlay }: VideoCardPro
     setLoading(true)
     await onToggleWatch(video.id, isWatched)
     setLoading(false)
+  }
+
+  const handleOpenNotes = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onOpenWithNotes) {
+      onOpenWithNotes(video)
+    }
   }
 
   return (
@@ -92,11 +100,11 @@ export default function VideoCard({ video, onToggleWatch, onPlay }: VideoCardPro
         </div>
 
         {/* Actions */}
-        <div className="mt-auto">
+        <div className="grid grid-cols-2 gap-2 mt-auto">
           <button
             onClick={handleToggle}
             disabled={loading}
-            className={`w-full flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
               ? 'bg-[#e2f2da] text-[#589e36] border-[#589e36] hover:bg-[#d4edc9]'
               : 'bg-white text-[#9c826b] border-[#e6dcc8] hover:bg-[#fffaeb]'
               }`}
@@ -108,7 +116,14 @@ export default function VideoCard({ video, onToggleWatch, onPlay }: VideoCardPro
             ) : (
               <Circle size={16} strokeWidth={2.5} />
             )}
-            {isWatched ? '시청완료' : '시청완료로 체크'}
+            {isWatched ? '완료' : '체크'}
+          </button>
+          <button
+            onClick={handleOpenNotes}
+            className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 bg-amber-100 text-amber-700 border-amber-400 hover:bg-amber-200"
+          >
+            <StickyNote size={16} strokeWidth={2.5} />
+            메모
           </button>
         </div>
       </div>

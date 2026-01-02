@@ -122,6 +122,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const [selectedVideoForPlayer, setSelectedVideoForPlayer] = useState<VideoWithLog | null>(null)
+  const [openWithNotes, setOpenWithNotes] = useState(false)
   const [streak, setStreak] = useState(0)
   const [todayWatched, setTodayWatched] = useState(false)
   const [activeChannel, setActiveChannel] = useState<string | null>(null)
@@ -664,8 +665,8 @@ export default function Home() {
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
               className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all ${syncStatus === 'syncing'
-                  ? 'bg-blue-100 border-2 border-blue-300 cursor-not-allowed'
-                  : 'bg-[#fffaeb] border-2 border-[#e6dcc8] hover:bg-white hover:border-blue-400 hover:shadow-lg active:scale-95'
+                ? 'bg-blue-100 border-2 border-blue-300 cursor-not-allowed'
+                : 'bg-[#fffaeb] border-2 border-[#e6dcc8] hover:bg-white hover:border-blue-400 hover:shadow-lg active:scale-95'
                 }`}
               title="새 영상 확인"
             >
@@ -718,8 +719,8 @@ export default function Home() {
       {showSyncToast && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${newVideosCount > 0 ? 'animate-bounce' : ''}`}>
           <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg border-2 border-white ${newVideosCount > 0
-              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-green-300/50'
-              : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-300/50'
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-green-300/50'
+            : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-300/50'
             }`}>
             {newVideosCount > 0 ? (
               <>
@@ -939,8 +940,14 @@ export default function Home() {
                     key={video.id}
                     video={video}
                     onToggleWatch={handleToggleWatch}
-
-                    onPlay={setSelectedVideoForPlayer}
+                    onPlay={(v) => {
+                      setOpenWithNotes(false)
+                      setSelectedVideoForPlayer(v)
+                    }}
+                    onOpenWithNotes={(v) => {
+                      setOpenWithNotes(true)
+                      setSelectedVideoForPlayer(v)
+                    }}
                   />
                 ))}
               </div>
@@ -953,9 +960,12 @@ export default function Home() {
       {selectedVideoForPlayer && (
         <VideoPlayerModal
           video={selectedVideoForPlayer}
-          onClose={() => setSelectedVideoForPlayer(null)}
+          onClose={() => {
+            setSelectedVideoForPlayer(null)
+            setOpenWithNotes(false)
+          }}
           onComplete={(id, isWatched) => handleToggleWatch(id, isWatched)}
-
+          openWithNotes={openWithNotes}
         />
       )}
 

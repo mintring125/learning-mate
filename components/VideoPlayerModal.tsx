@@ -61,12 +61,13 @@ interface VideoPlayerModalProps {
     video: VideoWithLog
     onClose: () => void
     onComplete: (videoId: string, isWatched: boolean) => void
+    openWithNotes?: boolean
 }
 
-export default function VideoPlayerModal({ video, onClose, onComplete }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({ video, onClose, onComplete, openWithNotes = false }: VideoPlayerModalProps) {
     const [isWatched, setIsWatched] = useState(video.watch_count > 0)
     const [loading, setLoading] = useState(false)
-    const [showNotes, setShowNotes] = useState(false)
+    const [showNotes, setShowNotes] = useState(openWithNotes)
     const [noteContent, setNoteContent] = useState('')
     const [noteSaving, setNoteSaving] = useState(false)
     const [noteSaved, setNoteSaved] = useState(false)
