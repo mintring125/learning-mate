@@ -70,21 +70,21 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
     >
       <button
         onClick={onSelect}
-        className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 md:gap-2 ${isActive
-          ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
-          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+        className={`px-4 py-2 text-sm font-bold rounded-2xl transition-all flex items-center gap-2 ${isActive
+          ? 'bg-[#ffffff] text-[#4a4a4a] shadow-[0_4px_12px_-2px_rgba(92,81,70,0.08)] ring-1 ring-[#e8e4db]'
+          : 'text-[#8c8c8c] hover:text-[#4a4a4a] hover:bg-[#fffbf7]'
           }`}
       >
         {/* Drag Handle */}
         <span
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 touch-none"
+          className={`cursor-grab active:cursor-grabbing touch-none ${isActive ? 'text-[#eebb76]' : 'text-[#e8e4db] hover:text-[#c4c0b6]'}`}
         >
-          <GripVertical size={14} />
+          <GripVertical size={14} strokeWidth={2.5} />
         </span>
         <span className="max-w-[80px] md:max-w-[120px] truncate">{channelName}</span>
-        <span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#e6f0ea] text-[#6b9e78]' : 'bg-[#f2efe9] text-[#8c8c8c]'}`}>
           {watched}/{total}
         </span>
       </button>
@@ -94,7 +94,7 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           onRename()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-1 right-5 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="absolute -top-1 right-5 bg-[#7aa2bd] text-white p-1 rounded-full shadow-sm hover:bg-[#6891ac] transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 이름 변경"
       >
         <Edit2 size={10} strokeWidth={2.5} />
@@ -105,7 +105,7 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           onDelete()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-sm hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="absolute -top-1 -right-1 bg-[#ff8c8c] text-white p-1 rounded-full shadow-sm hover:bg-[#ff7575] transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 삭제"
       >
         <X size={10} strokeWidth={2.5} />
@@ -636,83 +636,86 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-3 md:px-6 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-lg">L</span>
+      <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-lg border-b border-[#e8e4db] supports-[backdrop-filter]:bg-white/60">
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#6b9e78] to-[#4a7a58] flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(107,158,120,0.3)]">
+              <span className="text-white font-bold text-xl font-sans tracking-tight">L</span>
             </div>
-            <h1 className="hidden md:block text-lg font-semibold text-slate-800">
+            <h1 className="hidden md:block text-lg font-bold text-[#4a4a4a] tracking-tight">
               Learning Mate
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Streak Badge */}
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${streak > 0
-              ? 'bg-amber-50 text-amber-600 border border-amber-200'
-              : 'bg-slate-100 text-slate-500 border border-slate-200'
+            <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${streak > 0
+              ? 'bg-[#fff8eb] text-[#eebb76] border border-[#eebb76]/30'
+              : 'bg-[#f7f5f0] text-[#8c8c8c] border border-[#e8e4db]'
               }`}>
-              <Flame size={16} className={streak > 0 ? "fill-amber-500 text-amber-500" : ""} />
+              <Flame size={16} className={streak > 0 ? "fill-[#eebb76] text-[#eebb76]" : ""} strokeWidth={2.5} />
               <span className="font-bold">{streak}</span>
-              <span className="hidden sm:inline text-xs opacity-70">일</span>
+              <span className="hidden sm:inline text-xs opacity-70">Day</span>
             </div>
 
             {/* Sync Button */}
             <button
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
-              className={`p-2 rounded-lg transition-all ${syncStatus === 'syncing'
-                ? 'bg-blue-50 text-blue-500'
-                : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${syncStatus === 'syncing'
+                ? 'bg-[#eef5f9] text-[#7aa2bd]'
+                : 'hover:bg-[#f7f5f0] text-[#8c8c8c] hover:text-[#4a4a4a] active:scale-95'
                 }`}
               title="새 영상 확인"
             >
               {syncStatus === 'syncing' ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2 size={20} className="animate-spin" />
               ) : (
-                <RefreshCw size={18} />
+                <RefreshCw size={20} strokeWidth={2} />
               )}
             </button>
 
             {/* Add Video Button */}
             <button
               onClick={() => setShowAddVideoModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-sm transition-all shadow-sm"
+              className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 gap-2 rounded-full bg-[#6b9e78] hover:bg-[#5f8c6b] text-white font-bold text-sm transition-all shadow-[0_4px_12px_-2px_rgba(107,158,120,0.3)] hover:shadow-[0_6px_16px_-4px_rgba(107,158,120,0.4)] active:scale-95 active:shadow-none"
               title="영상 추가"
             >
-              <Plus size={16} strokeWidth={2.5} />
-              <span className="hidden sm:inline">추가</span>
+              <Plus size={20} strokeWidth={3} />
+              <span className="hidden sm:inline">Add</span>
             </button>
+
+            <div className="w-px h-6 bg-[#e8e4db] mx-1 md:hidden"></div>
 
             {/* Profile Button */}
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-all"
+              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-[#f7f5f0] transition-all group"
             >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                <UserCircle size={18} className="text-slate-600" />
+              <div className="w-9 h-9 rounded-full bg-[#f2efe9] border-2 border-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                <UserCircle size={20} className="text-[#8c8c8c]" />
               </div>
-              <span className="hidden md:inline text-sm font-medium text-slate-700">{user.username}</span>
             </button>
 
-            {/* Settings */}
-            <Link
-              href="/change-password"
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-              title="비밀번호 변경"
-            >
-              <Key size={18} />
-            </Link>
+            {/* Settings & Logout (Only Desktop) */}
+            <div className="hidden md:flex items-center gap-1">
+              <Link
+                href="/change-password"
+                className="w-9 h-9 flex items-center justify-center text-[#8c8c8c] hover:text-[#4a4a4a] hover:bg-[#f7f5f0] rounded-full transition-all"
+                title="비밀번호 변경"
+              >
+                <Key size={18} />
+              </Link>
 
-            {/* Logout */}
-            <button
-              onClick={logout}
-              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="로그아웃"
-            >
-              <LogOut size={18} />
-            </button>
+              <button
+                onClick={logout}
+                className="w-9 h-9 flex items-center justify-center text-[#8c8c8c] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                title="로그아웃"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+            {/* Mobile Menu Button - can implement later if needed */}
           </div>
         </div>
       </header>
@@ -792,54 +795,57 @@ export default function Home() {
 
           {/* Progress Bar & Filters */}
           {activeChannel && totalInChannel > 0 && (
-            <div className="px-4 md:px-6 py-4 bg-white border-b border-slate-100">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+            <div className="px-4 md:px-6 py-6 border-b border-[#e8e4db] bg-white">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 {/* Filter Buttons */}
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                  <div className="flex bg-slate-100 p-1 rounded-lg">
-                    <button
-                      onClick={() => setFilterType('all')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'all'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                      전체 ({totalInChannel})
-                    </button>
-                    <button
-                      onClick={() => setFilterType('unwatched')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'unwatched'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                      미시청 ({totalInChannel - watchedInChannel})
-                    </button>
-                    <button
-                      onClick={() => setFilterType('watched')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'watched'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                      완료 ({watchedInChannel})
-                    </button>
-                  </div>
+                <div className="flex bg-[#f7f5f0] p-1.5 rounded-2xl w-full md:w-auto">
+                  <button
+                    onClick={() => setFilterType('all')}
+                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'all'
+                      ? 'bg-white text-[#4a4a4a] shadow-sm'
+                      : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
+                      }`}
+                  >
+                    전체 ({totalInChannel})
+                  </button>
+                  <button
+                    onClick={() => setFilterType('unwatched')}
+                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'unwatched'
+                      ? 'bg-white text-[#eebb76] shadow-sm'
+                      : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
+                      }`}
+                  >
+                    미시청 <span className="hidden sm:inline">({totalInChannel - watchedInChannel})</span>
+                  </button>
+                  <button
+                    onClick={() => setFilterType('watched')}
+                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'watched'
+                      ? 'bg-white text-[#6b9e78] shadow-sm'
+                      : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
+                      }`}
+                  >
+                    완료 <span className="hidden sm:inline">({watchedInChannel})</span>
+                  </button>
                 </div>
 
                 {/* Progress Text */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">진행률</span>
-                  <span className="text-sm font-semibold text-emerald-600">{progressPercent}%</span>
+                <div className="flex items-center justify-between md:justify-end gap-3 px-2">
+                  <span className="text-xs font-medium text-[#8c8c8c]">학습 진행률</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-[#6b9e78]">{progressPercent}</span>
+                    <span className="text-xs font-medium text-[#6b9e78]">%</span>
+                  </div>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-3 bg-[#f2efe9] rounded-full overflow-hidden shadow-inner">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-gradient-to-r from-[#8cc99f] to-[#6b9e78] rounded-full transition-all duration-700 ease-out relative"
                   style={{ width: `${progressPercent}%` }}
-                />
+                >
+                  <div className="absolute inset-0 bg-white/20 background-shine"></div>
+                </div>
               </div>
             </div>
           )}
