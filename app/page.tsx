@@ -8,7 +8,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Video, VideoWithLog } from '@/types'
 import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
-import QuizModal from '@/components/QuizModal'
+
 import VideoPlayerModal from '@/components/VideoPlayerModal'
 import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { subDays } from 'date-fns'
@@ -120,7 +120,7 @@ export default function Home() {
   const router = useRouter()
   const [videos, setVideos] = useState<VideoWithLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedVideoForQuiz, setSelectedVideoForQuiz] = useState<VideoWithLog | null>(null)
+
   const [selectedVideoForPlayer, setSelectedVideoForPlayer] = useState<VideoWithLog | null>(null)
   const [streak, setStreak] = useState(0)
   const [todayWatched, setTodayWatched] = useState(false)
@@ -412,20 +412,7 @@ export default function Home() {
     }
   }
 
-  // Handle quiz completion - update quiz_completed status
-  const handleQuizComplete = async (videoId: string) => {
-    try {
-      const { error } = await supabase
-        .from('videos')
-        .update({ quiz_completed: true })
-        .eq('id', videoId)
 
-      if (error) throw error
-      await fetchData()
-    } catch (error) {
-      console.error('Error updating quiz completion:', error)
-    }
-  }
 
 
   // Delete channel and all its videos (soft delete - preserves watch history)
@@ -676,11 +663,10 @@ export default function Home() {
             <button
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
-              className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all ${
-                syncStatus === 'syncing'
+              className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full shadow-md transition-all ${syncStatus === 'syncing'
                   ? 'bg-blue-100 border-2 border-blue-300 cursor-not-allowed'
                   : 'bg-[#fffaeb] border-2 border-[#e6dcc8] hover:bg-white hover:border-blue-400 hover:shadow-lg active:scale-95'
-              }`}
+                }`}
               title="새 영상 확인"
             >
               {syncStatus === 'syncing' ? (
@@ -731,11 +717,10 @@ export default function Home() {
       {/* Sync Toast */}
       {showSyncToast && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${newVideosCount > 0 ? 'animate-bounce' : ''}`}>
-          <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg border-2 border-white ${
-            newVideosCount > 0
+          <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg border-2 border-white ${newVideosCount > 0
               ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-green-300/50'
               : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-300/50'
-          }`}>
+            }`}>
             {newVideosCount > 0 ? (
               <>
                 <Sparkles size={18} className="animate-pulse" />
@@ -954,7 +939,7 @@ export default function Home() {
                     key={video.id}
                     video={video}
                     onToggleWatch={handleToggleWatch}
-                    onQuiz={setSelectedVideoForQuiz}
+
                     onPlay={setSelectedVideoForPlayer}
                   />
                 ))}
@@ -970,23 +955,11 @@ export default function Home() {
           video={selectedVideoForPlayer}
           onClose={() => setSelectedVideoForPlayer(null)}
           onComplete={(id, isWatched) => handleToggleWatch(id, isWatched)}
-          onQuiz={(video) => {
-            setSelectedVideoForPlayer(null)
-            setSelectedVideoForQuiz(video)
-          }}
+
         />
       )}
 
-      {selectedVideoForQuiz && (
-        <QuizModal
-          video={selectedVideoForQuiz}
-          onClose={() => setSelectedVideoForQuiz(null)}
-          onQuizComplete={(videoId) => {
-            // Mark quiz as completed (not auto-watch)
-            handleQuizComplete(videoId)
-          }}
-        />
-      )}
+
 
       {/* Emblem Gallery Modal */}
       <EmblemModal

@@ -1,7 +1,7 @@
 'use client'
 
 import { VideoWithLog } from '@/types'
-import { X, CheckCircle, Circle, HelpCircle, ExternalLink, StickyNote, Save, ChevronDown, ChevronUp, Eye, Edit3 } from 'lucide-react'
+import { X, CheckCircle, Circle, ExternalLink, StickyNote, Save, ChevronDown, ChevronUp, Eye, Edit3 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 
 // 플래시카드 토글 아이템 컴포넌트
@@ -61,10 +61,9 @@ interface VideoPlayerModalProps {
     video: VideoWithLog
     onClose: () => void
     onComplete: (videoId: string, isWatched: boolean) => void
-    onQuiz: (video: VideoWithLog) => void
 }
 
-export default function VideoPlayerModal({ video, onClose, onComplete, onQuiz }: VideoPlayerModalProps) {
+export default function VideoPlayerModal({ video, onClose, onComplete }: VideoPlayerModalProps) {
     const [isWatched, setIsWatched] = useState(video.watch_count > 0)
     const [loading, setLoading] = useState(false)
     const [showNotes, setShowNotes] = useState(false)
@@ -209,14 +208,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, onQuiz }:
                             <span className="hidden landscape:inline sm:landscape:hidden">{isWatched ? '완료' : '완료표시'}</span>
                         </button>
 
-                        <button
-                            onClick={() => onQuiz(video)}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl font-semibold transition-colors border border-purple-200 text-sm sm:text-base"
-                        >
-                            <HelpCircle size={18} />
-                            <span className="landscape:hidden sm:landscape:inline">퀴즈 풀기</span>
-                            <span className="hidden landscape:inline sm:landscape:hidden">퀴즈</span>
-                        </button>
+
 
                         {/* 메모 버튼 */}
                         <button

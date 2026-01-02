@@ -5,7 +5,6 @@ export interface Video {
   url: string;
   thumbnail_url?: string;
   published_at?: string; // YouTube upload date
-  quiz_completed?: boolean; // Quiz passed status
   is_deleted?: boolean; // Soft delete flag - preserves watch history
   created_at: string;
 }

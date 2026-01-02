@@ -1,13 +1,12 @@
 'use client'
 
 import { VideoWithLog } from '@/types'
-import { Play, Youtube, BrainCircuit, Sparkles, CheckCircle2, Circle, Trophy } from 'lucide-react'
+import { Play, Youtube, Sparkles, CheckCircle2, Circle } from 'lucide-react'
 import { useState } from 'react'
 
 interface VideoCardProps {
   video: VideoWithLog
   onToggleWatch: (id: string, isWatched: boolean) => Promise<void>
-  onQuiz: (video: VideoWithLog) => void
   onPlay: (video: VideoWithLog) => void
 }
 
@@ -19,11 +18,10 @@ const isNewVideo = (publishedAt?: string): boolean => {
   return new Date(publishedAt) > oneWeekAgo
 }
 
-export default function VideoCard({ video, onToggleWatch, onQuiz, onPlay }: VideoCardProps) {
+export default function VideoCard({ video, onToggleWatch, onPlay }: VideoCardProps) {
   const [loading, setLoading] = useState(false)
   const isWatched = video.watch_count > 0
   const isNew = isNewVideo(video.published_at)
-  const isQuizCompleted = video.quiz_completed === true
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -94,11 +92,11 @@ export default function VideoCard({ video, onToggleWatch, onQuiz, onPlay }: Vide
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-2 gap-2 mt-auto">
+        <div className="mt-auto">
           <button
             onClick={handleToggle}
             disabled={loading}
-            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
+            className={`w-full flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isWatched
               ? 'bg-[#e2f2da] text-[#589e36] border-[#589e36] hover:bg-[#d4edc9]'
               : 'bg-white text-[#9c826b] border-[#e6dcc8] hover:bg-[#fffaeb]'
               }`}
@@ -110,29 +108,7 @@ export default function VideoCard({ video, onToggleWatch, onQuiz, onPlay }: Vide
             ) : (
               <Circle size={16} strokeWidth={2.5} />
             )}
-            {isWatched ? '완료' : '체크'}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onQuiz(video)
-            }}
-            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl font-black transition-all text-xs border-b-4 active:border-b-0 active:translate-y-1 ${isQuizCompleted
-              ? 'bg-amber-100 text-amber-700 border-amber-500 hover:bg-amber-200'
-              : 'bg-violet-100 text-violet-600 border-violet-400 hover:bg-violet-200'
-              }`}
-          >
-            {isQuizCompleted ? (
-              <>
-                <Trophy size={16} strokeWidth={2.5} />
-                성공!
-              </>
-            ) : (
-              <>
-                <BrainCircuit size={16} strokeWidth={2.5} />
-                퀴즈
-              </>
-            )}
+            {isWatched ? '시청완료' : '시청완료로 체크'}
           </button>
         </div>
       </div>
