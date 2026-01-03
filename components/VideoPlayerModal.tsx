@@ -133,22 +133,22 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl flex flex-col landscape:flex-row max-h-[95vh] landscape:max-h-[90vh]">
+            <div className="bg-[var(--surface)] w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl flex flex-col landscape:flex-row max-h-[95vh] landscape:max-h-[90vh]">
                 {/* Header - 세로모드에서만 표시 */}
-                <div className="landscape:hidden flex items-center justify-between p-3 sm:p-4 border-b border-gray-100 bg-gray-50">
+                <div className="landscape:hidden flex items-center justify-between p-3 sm:p-4 border-b border-[var(--border)] bg-[var(--background-subtle)]">
                     <div className="flex items-center gap-3 min-w-0">
-                        <h3 className="font-semibold text-base sm:text-lg text-gray-800 line-clamp-1">{video.title}</h3>
+                        <h3 className="font-semibold text-base sm:text-lg text-[var(--foreground)] line-clamp-1">{video.title}</h3>
                         {isWatched && (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full flex-shrink-0">
+                            <span className="px-2 py-0.5 bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium rounded-full flex-shrink-0">
                                 시청완료
                             </span>
                         )}
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                        className="p-2 hover:bg-[var(--border)] rounded-full transition-colors flex-shrink-0"
                     >
-                        <X size={24} className="text-gray-500" />
+                        <X size={24} className="text-[var(--foreground-muted)]" />
                     </button>
                 </div>
 
@@ -172,18 +172,18 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                 </div>
 
                 {/* Actions - 가로모드에서 오른쪽, 세로모드에서 아래 */}
-                <div className="p-4 sm:p-6 bg-white flex flex-col sm:flex-row landscape:flex-col items-center justify-between gap-3 sm:gap-4 landscape:w-48 landscape:justify-start landscape:items-stretch">
+                <div className="p-4 sm:p-6 bg-[var(--surface)] flex flex-col sm:flex-row landscape:flex-col items-center justify-between gap-3 sm:gap-4 landscape:w-48 landscape:justify-start landscape:items-stretch">
                     {/* 가로모드 헤더 (닫기 버튼 + 제목) */}
                     <div className="hidden landscape:flex landscape:flex-col landscape:gap-3 landscape:w-full landscape:mb-2">
                         <button
                             onClick={onClose}
-                            className="self-end p-2 hover:bg-gray-200 rounded-full transition-colors"
+                            className="self-end p-2 hover:bg-[var(--border)] rounded-full transition-colors"
                         >
-                            <X size={20} className="text-gray-500" />
+                            <X size={20} className="text-[var(--foreground-muted)]" />
                         </button>
-                        <h3 className="font-semibold text-sm text-gray-800 line-clamp-2">{video.title}</h3>
+                        <h3 className="font-semibold text-sm text-[var(--foreground)] line-clamp-2">{video.title}</h3>
                         {isWatched && (
-                            <span className="self-start px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                            <span className="self-start px-2 py-0.5 bg-[var(--primary-light)] text-[var(--primary)] text-xs font-medium rounded-full">
                                 시청완료
                             </span>
                         )}
@@ -194,8 +194,8 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                             onClick={handleToggle}
                             disabled={loading}
                             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${isWatched
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-blue-500/30'
+                                ? 'bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[#d9e6de]'
+                                : 'bg-[var(--secondary)] text-white hover:bg-[#6891ac] shadow-lg hover:shadow-[var(--shadow-hover)]'
                                 }`}
                         >
                             {loading ? (
@@ -215,8 +215,8 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                         <button
                             onClick={() => setShowNotes(!showNotes)}
                             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-colors border text-sm sm:text-base ${showNotes
-                                ? 'bg-amber-100 text-amber-700 border-amber-300'
-                                : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200'
+                                ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/50'
+                                : 'bg-[var(--background-subtle)] text-[var(--accent)] hover:bg-[var(--accent-light)] border-[var(--border)]'
                                 }`}
                         >
                             <StickyNote size={18} />
@@ -230,7 +230,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                         href={video.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs sm:text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 hover:underline landscape:mt-auto"
+                        className="text-xs sm:text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] flex items-center gap-1 hover:underline landscape:mt-auto"
                     >
                         <span className="landscape:hidden">YouTube에서 보기</span>
                         <span className="hidden landscape:inline">YouTube</span>
@@ -240,30 +240,30 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
             </div>
 
             {/* Notes Panel - 별도의 슬라이드 패널 */}
-            <div className={`fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl transform transition-transform duration-300 z-60 ${showNotes ? 'translate-x-0' : 'translate-x-full'
+            <div className={`fixed right-0 top-0 h-full w-full sm:w-96 bg-[var(--surface)] shadow-2xl transform transition-transform duration-300 z-60 ${showNotes ? 'translate-x-0' : 'translate-x-full'
                 }`}>
                 <div className="flex flex-col h-full">
                     {/* 메모 헤더 */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+                    <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--accent-light)]/50 to-[var(--background-subtle)]">
                         <div className="flex items-center gap-2">
-                            <StickyNote className="text-amber-600" size={20} />
-                            <h3 className="font-semibold text-gray-800">메모</h3>
+                            <StickyNote className="text-[var(--accent)]" size={20} />
+                            <h3 className="font-semibold text-[var(--foreground)]">메모</h3>
                         </div>
                         <button
                             onClick={() => setShowNotes(false)}
-                            className="p-2 hover:bg-amber-100 rounded-full transition-colors"
+                            className="p-2 hover:bg-[var(--accent-light)] rounded-full transition-colors"
                         >
-                            <X size={20} className="text-gray-500" />
+                            <X size={20} className="text-[var(--foreground-muted)]" />
                         </button>
                     </div>
 
                     {/* 편집/미리보기 탭 */}
-                    <div className="flex border-b border-gray-200">
+                    <div className="flex border-b border-[var(--border)]">
                         <button
                             onClick={() => setNoteMode('edit')}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors ${noteMode === 'edit'
-                                ? 'text-amber-700 bg-amber-50 border-b-2 border-amber-500'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                ? 'text-[var(--accent)] bg-[var(--accent-light)] border-b-2 border-[var(--accent)]'
+                                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-subtle)]'
                                 }`}
                         >
                             <Edit3 size={16} />
@@ -292,7 +292,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                                 value={noteContent}
                                 onChange={(e) => setNoteContent(e.target.value)}
                                 placeholder={`영상을 보며 메모를 작성해보세요...\n\n💡 중요한 내용\n📝 핵심 키워드\n\n📌 플래시카드 만들기:\n줄 앞에 /를 붙이면 복습 시 숨겨집니다!\n예시: /일본의 수도는 도쿄입니다`}
-                                className="w-full h-full resize-none border border-gray-200 rounded-xl p-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder:text-gray-400 text-sm leading-relaxed"
+                                className="w-full h-full resize-none border border-[var(--border)] rounded-xl p-4 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent placeholder:text-[var(--foreground-muted)] text-sm leading-relaxed"
                             />
                         ) : noteContent.trim() ? (
                             <NoteRenderer content={noteContent} />

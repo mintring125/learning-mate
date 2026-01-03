@@ -71,20 +71,20 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
       <button
         onClick={onSelect}
         className={`px-4 py-2 text-sm font-bold rounded-2xl transition-all flex items-center gap-2 ${isActive
-          ? 'bg-[#ffffff] text-[#4a4a4a] shadow-[0_4px_12px_-2px_rgba(92,81,70,0.08)] ring-1 ring-[#e8e4db]'
-          : 'text-[#8c8c8c] hover:text-[#4a4a4a] hover:bg-[#fffbf7]'
+          ? 'bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft)] ring-1 ring-[var(--border)]'
+          : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--accent-light)]'
           }`}
       >
         {/* Drag Handle */}
         <span
           {...attributes}
           {...listeners}
-          className={`cursor-grab active:cursor-grabbing touch-none ${isActive ? 'text-[#eebb76]' : 'text-[#e8e4db] hover:text-[#c4c0b6]'}`}
+          className={`cursor-grab active:cursor-grabbing touch-none ${isActive ? 'text-[var(--accent)]' : 'text-[var(--border)] hover:text-[#c4c0b6]'}`}
         >
           <GripVertical size={14} strokeWidth={2.5} />
         </span>
         <span className="max-w-[80px] md:max-w-[120px] truncate">{channelName}</span>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#e6f0ea] text-[#6b9e78]' : 'bg-[#f2efe9] text-[#8c8c8c]'}`}>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[var(--primary-light)] text-[var(--primary)]' : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)]'}`}>
           {watched}/{total}
         </span>
       </button>
@@ -636,7 +636,7 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-lg border-b border-[#e8e4db] supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-40 bg-[var(--surface)]/70 backdrop-blur-lg border-b border-[var(--border)] supports-[backdrop-filter]:bg-[var(--surface)]/60">
         <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden relative group cursor-pointer hover:scale-110 transition-transform duration-300">
@@ -651,7 +651,7 @@ export default function Home() {
                 }}
               />
             </div>
-            <h1 className="hidden md:block text-lg font-bold text-[#4a4a4a] tracking-tight">
+            <h1 className="hidden md:block text-lg font-bold text-[var(--foreground)] tracking-tight">
               Learning Mate
             </h1>
           </div>
@@ -659,10 +659,10 @@ export default function Home() {
           <div className="flex items-center gap-2 md:gap-4">
             {/* Streak Badge */}
             <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${streak > 0
-              ? 'bg-[#fff8eb] text-[#eebb76] border border-[#eebb76]/30'
-              : 'bg-[#f7f5f0] text-[#8c8c8c] border border-[#e8e4db]'
+              ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/30'
+              : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)] border border-[var(--border)]'
               }`}>
-              <Flame size={16} className={streak > 0 ? "fill-[#eebb76] text-[#eebb76]" : ""} strokeWidth={2.5} />
+              <Flame size={16} className={streak > 0 ? "fill-[var(--accent)] text-[var(--accent)]" : ""} strokeWidth={2.5} />
               <span className="font-bold">{streak}</span>
               <span className="hidden sm:inline text-xs opacity-70">Day</span>
             </div>
@@ -672,8 +672,8 @@ export default function Home() {
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${syncStatus === 'syncing'
-                ? 'bg-[#eef5f9] text-[#7aa2bd]'
-                : 'hover:bg-[#f7f5f0] text-[#8c8c8c] hover:text-[#4a4a4a] active:scale-95'
+                ? 'bg-[var(--secondary-light)] text-[var(--secondary)]'
+                : 'hover:bg-[var(--background-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-95'
                 }`}
               title="새 영상 확인"
             >
@@ -687,22 +687,22 @@ export default function Home() {
             {/* Add Video Button */}
             <button
               onClick={() => setShowAddVideoModal(true)}
-              className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 gap-2 rounded-full bg-[#6b9e78] hover:bg-[#5f8c6b] text-white font-bold text-sm transition-all shadow-[0_4px_12px_-2px_rgba(107,158,120,0.3)] hover:shadow-[0_6px_16px_-4px_rgba(107,158,120,0.4)] active:scale-95 active:shadow-none"
+              className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 gap-2 rounded-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold text-sm transition-all shadow-[0_4px_12px_-2px_rgba(107,158,120,0.3)] hover:shadow-[0_6px_16px_-4px_rgba(107,158,120,0.4)] active:scale-95 active:shadow-none"
               title="영상 추가"
             >
               <Plus size={20} strokeWidth={3} />
               <span className="hidden sm:inline">Add</span>
             </button>
 
-            <div className="w-px h-6 bg-[#e8e4db] mx-1 md:hidden"></div>
+            <div className="w-px h-6 bg-[var(--border)] mx-1 md:hidden"></div>
 
             {/* Profile Button */}
             <button
               onClick={() => setEmblemModalOpen(true)}
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-[#f7f5f0] transition-all group"
+              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-[var(--background-subtle)] transition-all group"
             >
-              <div className="w-9 h-9 rounded-full bg-[#f2efe9] border-2 border-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
-                <UserCircle size={20} className="text-[#8c8c8c]" />
+              <div className="w-9 h-9 rounded-full bg-[var(--background-subtle)] border-2 border-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                <UserCircle size={20} className="text-[var(--foreground-muted)]" />
               </div>
             </button>
 
@@ -710,7 +710,7 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-1">
               <Link
                 href="/change-password"
-                className="w-9 h-9 flex items-center justify-center text-[#8c8c8c] hover:text-[#4a4a4a] hover:bg-[#f7f5f0] rounded-full transition-all"
+                className="w-9 h-9 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-subtle)] rounded-full transition-all"
                 title="비밀번호 변경"
               >
                 <Key size={18} />
@@ -718,7 +718,7 @@ export default function Home() {
 
               <button
                 onClick={logout}
-                className="w-9 h-9 flex items-center justify-center text-[#8c8c8c] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                className="w-9 h-9 flex items-center justify-center text-[var(--foreground-muted)] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                 title="로그아웃"
               >
                 <LogOut size={18} />
@@ -763,10 +763,10 @@ export default function Home() {
 
       <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-4 md:py-8">
         {/* Channel Tabs & Content */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
-            <div className="border-b border-slate-200 overflow-x-auto bg-slate-50 scrollbar-hide">
+            <div className="border-b border-[var(--border)] overflow-x-auto bg-[var(--background-subtle)] scrollbar-hide">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}

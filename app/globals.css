@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm & Cozy Theme */
-  --background: #fdfcf8;
-  /* 아주 연한 크림색 */
-  --background-subtle: #f7f5f0;
-  /* 조금 더 진한 웜 그레이 */
+  /* Warm & Cozy Theme - Adjusted for reduced glare */
+  --background: #f2efe9;
+  /* 부드러운 웜 베이지 */
+  --background-subtle: #e8e4db;
+  /* 조금 더 진한 베이지 */
 
-  --foreground: #4a4a4a;
-  /* 완전 블랙 대신 부드러운 차콜 */
-  --foreground-muted: #8c8c8c;
+  --foreground: #4e4b46;
+  /* 웜톤이 섞인 짙은 회갈색 */
+  --foreground-muted: #8c8982;
 
   /* Primary - Sage Green (차분하고 세련된 초록) */
   --primary: #6b9e78;
@@ -21,13 +21,15 @@
   --secondary-light: #eef5f9;
 
   /* Accent - Warm Amber (따뜻한 포인트) */
-  --accent: #eebb76;
-  --accent-light: #fff8eb;
+  --accent: #d9a45b;
+  /* 조금 더 차분한 앰버 */
+  --accent-light: #fef8ed;
 
   /* UI Elements */
-  --border: #e8e4db;
-  --border-light: #f2efe9;
-  --surface: #ffffff;
+  --border: #dcd6cb;
+  --border-light: #eae5dc;
+  --surface: #fbf9f6;
+  /* 완전 흰색 대신 아주 연한 크림 */
 
   /* Shadows */
   --shadow-soft: 0 4px 20px -2px rgba(92, 81, 70, 0.08);
