@@ -11,7 +11,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null
-    login: (username: string, password: string) => Promise<void>
+    login: (username: string, password: string, rememberMe?: boolean) => Promise<void>
     logout: () => void
     loading: boolean
 }
@@ -24,10 +24,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter()
 
     useEffect(() => {
-        // Auto-login check
+        // Auto-login check - check both localStorage and sessionStorage
         const checkSession = async () => {
             try {
-                const storedUser = localStorage.getItem('learning_mate_user')
+                // First check localStorage (remember me), then sessionStorage
+                const storedUser = localStorage.getItem('learning_mate_user') || sessionStorage.getItem('learning_mate_user')
                 if (storedUser) {
                     setUser(JSON.parse(storedUser))
                 }
@@ -40,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkSession()
     }, [])
 
-    const login = async (username: string, password: string) => {
+    const login = async (username: string, password: string, rememberMe: boolean = true) => {
         // Fetch to our backend to verify the user exists and check password
         try {
             const res = await fetch('/api/auth/login', {
@@ -56,7 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const data = await res.json()
             setUser(data.user)
-            localStorage.setItem('learning_mate_user', JSON.stringify(data.user))
+
+            // Use localStorage for remember me (persistent), sessionStorage otherwise (cleared on browser close)
+            if (rememberMe) {
+                localStorage.setItem('learning_mate_user', JSON.stringify(data.user))
+            } else {
+                sessionStorage.setItem('learning_mate_user', JSON.stringify(data.user))
+            }
+
             router.replace('/') // Use replace to prevent back button loop
         } catch (error) {
             throw error
@@ -65,7 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         setUser(null)
+        // Clear both storages on logout
         localStorage.removeItem('learning_mate_user')
+        sessionStorage.removeItem('learning_mate_user')
         router.replace('/login') // Use replace to prevent back button loop
     }
 
