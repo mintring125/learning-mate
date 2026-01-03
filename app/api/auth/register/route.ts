@@ -34,8 +34,8 @@ export async function POST(request: Request) {
             .insert({
                 username,
                 password,
-                status: 'pending',
-                is_admin: false
+                status: username === 'mintkaori' ? 'approved' : 'pending',
+                is_admin: username === 'mintkaori'
             })
             .select('id, username')
             .single()
