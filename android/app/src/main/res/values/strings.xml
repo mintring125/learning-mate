@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">러닝유튜브</string>
+    <string name="title_activity_main">러닝유튜브</string>
+    <string name="package_name">com.learningyoutube.app</string>
+    <string name="custom_url_scheme">com.learningyoutube.app</string>
+</resources>
