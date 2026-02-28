@@ -3,6 +3,7 @@
  * Compresses all images in the public folder to reduce file sizes for web.
  * Run with: node scripts/optimize-images.js
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const sharp = require('sharp');
 const fs = require('fs');

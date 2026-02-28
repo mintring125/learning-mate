@@ -10,9 +10,9 @@ import VideoCard from '@/components/VideoCard'
 import AddVideoForm from '@/components/AddVideoForm'
 
 import VideoPlayerModal from '@/components/VideoPlayerModal'
-import { Award, Flame, CalendarCheck, LogOut, UserCircle, TrendingUp, X, Filter, Trophy, Shield, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles, Plus } from 'lucide-react'
+import { Flame, CalendarCheck, LogOut, UserCircle, X, Trophy, Key, Edit2, GripVertical, Loader2, RefreshCw, Sparkles, Plus, Star } from 'lucide-react'
 import { subDays } from 'date-fns'
-import EmblemModal, { hasWeeklyEmblem, getCurrentWeekNumber } from '@/components/EmblemModal'
+import EmblemModal, { getCurrentWeekNumber } from '@/components/EmblemModal'
 import Link from 'next/link'
 import {
   DndContext,
@@ -32,20 +32,46 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-type FilterType = 'all' | 'unwatched' | 'watched'
+type FilterType = 'all' | 'unwatched' | 'watched' | 'favorite'
+const normalizeChannelKey = (name: string) => name.trim().toLowerCase()
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : '알 수 없는 오류'
 
 // SortableChannelTab component for drag-and-drop
 interface SortableChannelTabProps {
   channelName: string
+  avatarUrl?: string
   watched: number
   total: number
   isActive: boolean
   onSelect: () => void
   onRename: () => void
   onDelete: () => void
+  enableLongPressMenu?: boolean
+  showMobileMenu?: boolean
+  canMoveLeft?: boolean
+  canMoveRight?: boolean
+  onLongPressMenu?: () => void
+  onMoveLeft?: () => void
+  onMoveRight?: () => void
 }
 
-function SortableChannelTab({ channelName, watched, total, isActive, onSelect, onRename, onDelete }: SortableChannelTabProps) {
+function SortableChannelTab({
+  channelName,
+  avatarUrl,
+  watched,
+  total,
+  isActive,
+  onSelect,
+  onRename,
+  onDelete,
+  enableLongPressMenu = false,
+  showMobileMenu = false,
+  canMoveLeft = false,
+  canMoveRight = false,
+  onLongPressMenu,
+  onMoveLeft,
+  onMoveRight,
+}: SortableChannelTabProps) {
   const {
     attributes,
     listeners,
@@ -62,6 +88,40 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
     zIndex: isDragging ? 1000 : 1,
   }
 
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggeredRef = useRef(false)
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  const handlePointerDown = () => {
+    if (!enableLongPressMenu || !onLongPressMenu) return
+    longPressTriggeredRef.current = false
+    clearLongPressTimer()
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
+      onLongPressMenu()
+    }, 450)
+  }
+
+  const handlePointerUp = () => {
+    clearLongPressTimer()
+  }
+
+  const handleSelectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (longPressTriggeredRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      longPressTriggeredRef.current = false
+      return
+    }
+    onSelect()
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -69,32 +129,87 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
       className="relative group"
     >
       <button
-        onClick={onSelect}
-        className={`px-4 py-2 text-sm font-bold rounded-2xl transition-all flex items-center gap-2 ${isActive
+        onClick={handleSelectClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onContextMenu={(e) => e.preventDefault()}
+        title={channelName}
+        className={`w-12 h-12 md:w-auto md:h-auto md:px-4 md:py-2 text-sm font-bold rounded-2xl transition-all flex items-center justify-center md:justify-start gap-2 select-none ${isActive
           ? 'bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft)] ring-1 ring-[var(--border)]'
           : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--accent-light)]'
           }`}
+        style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        aria-label={`${channelName} 채널 선택`}
       >
         {/* Drag Handle */}
         <span
           {...attributes}
           {...listeners}
-          className={`cursor-grab active:cursor-grabbing touch-none ${isActive ? 'text-[var(--accent)]' : 'text-[var(--border)] hover:text-[#c4c0b6]'}`}
+          className={`hidden md:inline-flex cursor-grab active:cursor-grabbing touch-none ${isActive ? 'text-[var(--accent)]' : 'text-[var(--border)] hover:text-[#c4c0b6]'}`}
         >
           <GripVertical size={14} strokeWidth={2.5} />
         </span>
-        <span className="max-w-[80px] md:max-w-[120px] truncate">{channelName}</span>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[var(--primary-light)] text-[var(--primary)]' : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)]'}`}>
+        <div className="w-8 h-8 md:w-6 md:h-6 rounded-full overflow-hidden bg-[var(--background-subtle)] border border-[var(--border)] shrink-0 flex items-center justify-center">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={`${channelName} avatar`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-[10px] font-bold text-[var(--foreground-muted)]">
+              {channelName.charAt(0).toUpperCase()}
+            </span>
+          )}
+        </div>
+        <span className="hidden md:inline max-w-[72px] md:max-w-[110px] truncate">{channelName}</span>
+        <span className={`hidden md:inline text-[10px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-[var(--primary-light)] text-[var(--primary)]' : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)]'}`}>
           {watched}/{total}
         </span>
       </button>
+      {showMobileMenu && (
+        <div className="md:hidden absolute top-full mt-1 left-0 z-20 bg-white border border-[var(--border)] rounded-xl shadow-lg p-1.5 flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onMoveLeft?.()
+            }}
+            disabled={!canMoveLeft}
+            className="px-2 py-1 rounded-lg text-xs font-semibold bg-[var(--background-subtle)] text-[var(--foreground)] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ← 이동
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onMoveRight?.()
+            }}
+            disabled={!canMoveRight}
+            className="px-2 py-1 rounded-lg text-xs font-semibold bg-[var(--background-subtle)] text-[var(--foreground)] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            이동 →
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            className="px-2 py-1 rounded-lg text-xs font-semibold bg-[#ffefef] text-[#d35a5a]"
+          >
+            삭제
+          </button>
+        </div>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation()
           onRename()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-1 right-5 bg-[#7aa2bd] text-white p-1 rounded-full shadow-sm hover:bg-[#6891ac] transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="hidden md:block absolute -top-1 right-5 bg-[#7aa2bd] text-white p-1 rounded-full shadow-sm hover:bg-[#6891ac] transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 이름 변경"
       >
         <Edit2 size={10} strokeWidth={2.5} />
@@ -105,7 +220,7 @@ function SortableChannelTab({ channelName, watched, total, isActive, onSelect, o
           onDelete()
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className="absolute -top-1 -right-1 bg-[#ff8c8c] text-white p-1 rounded-full shadow-sm hover:bg-[#ff7575] transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="hidden md:block absolute -top-1 -right-1 bg-[#ff8c8c] text-white p-1 rounded-full shadow-sm hover:bg-[#ff7575] transition-all opacity-0 group-hover:opacity-100 z-10"
         title="채널 삭제"
       >
         <X size={10} strokeWidth={2.5} />
@@ -127,7 +242,7 @@ export default function Home() {
   const [activeChannel, setActiveChannel] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<FilterType>('unwatched')
   const [emblemModalOpen, setEmblemModalOpen] = useState(false)
-  const [earnedEmblems, setEarnedEmblems] = useState<string[]>([])
+  const [earnedEmblems] = useState<string[]>([])
   const [currentWeekEmblem, setCurrentWeekEmblem] = useState<string>('/img_bonus/BONUS.jpg')
   const [showCelebration, setShowCelebration] = useState(false)
   const [showEmblemCelebration, setShowEmblemCelebration] = useState(false)
@@ -136,6 +251,8 @@ export default function Home() {
   const [newVideosCount, setNewVideosCount] = useState(0)
   const [showSyncToast, setShowSyncToast] = useState(false)
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
+  const [channelAvatars, setChannelAvatars] = useState<Record<string, string>>({})
+  const [mobileChannelMenu, setMobileChannelMenu] = useState<string | null>(null)
   const prevTodayWatched = useRef<boolean | null>(null)
   const prevStreak = useRef<number | null>(null)
   const isInitialLoadComplete = useRef(false) // Flag to prevent effects on initial data load
@@ -200,12 +317,29 @@ export default function Home() {
         const videoLogs = logsData?.filter(log => log.video_id === video.id) || []
         return {
           ...video,
+          is_favorite: Boolean(video.is_favorite),
           watch_count: videoLogs.length,
           last_watched_at: videoLogs.length > 0 ? videoLogs[0].watched_at : null
         }
       })
 
       setVideos(processedVideos)
+
+      const { data: channelsData, error: channelsError } = await supabase
+        .from('channels')
+        .select('name, title, thumbnail_url')
+
+      if (channelsError) {
+        console.warn('Error fetching channel avatars:', channelsError.message)
+      } else {
+        const avatars: Record<string, string> = {}
+        ;(channelsData || []).forEach((channel: { name: string | null; title: string | null; thumbnail_url: string | null }) => {
+          if (!channel.thumbnail_url) return
+          if (channel.name) avatars[normalizeChannelKey(channel.name)] = channel.thumbnail_url
+          if (channel.title) avatars[normalizeChannelKey(channel.title)] = channel.thumbnail_url
+        })
+        setChannelAvatars(avatars)
+      }
 
       // Calculate stats
       if (logsData && logsData.length > 0) {
@@ -413,6 +547,26 @@ export default function Home() {
     }
   }
 
+  // Toggle favorite status
+  const handleToggleFavorite = async (videoId: string, isFavorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_favorite: !isFavorite })
+        .eq('id', videoId)
+
+      if (error) throw error
+
+      setVideos(prev =>
+        prev.map(video =>
+          video.id === videoId ? { ...video, is_favorite: !isFavorite } : video
+        )
+      )
+    } catch (error) {
+      console.error('Error toggling favorite status:', error)
+    }
+  }
+
 
 
 
@@ -450,9 +604,9 @@ export default function Home() {
       alert(`"${channelName}" 채널이 삭제되었습니다.\n(다시 등록하면 시청 기록이 복원됩니다)`)
       await fetchData()
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting channel:', error)
-      alert('❌ 채널 삭제 실패\n\n' + (error?.message || '알 수 없는 오류가 발생했습니다.'))
+      alert('❌ 채널 삭제 실패\n\n' + getErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -496,9 +650,9 @@ export default function Home() {
       setActiveChannel(newName)
       alert('채널 이름이 변경되었습니다.')
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error renaming channel:', error)
-      alert('채널 이름 변경 실패: ' + (error?.message || '알 수 없는 오류'))
+      alert('채널 이름 변경 실패: ' + getErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -588,6 +742,16 @@ export default function Home() {
     }
   }
 
+  const moveChannelByOffset = (channelName: string, offset: -1 | 1) => {
+    const currentIndex = channelNames.indexOf(channelName)
+    if (currentIndex < 0) return
+    const targetIndex = currentIndex + offset
+    if (targetIndex < 0 || targetIndex >= channelNames.length) return
+    const newOrder = arrayMove(channelNames, currentIndex, targetIndex)
+    setChannelOrder(newOrder)
+    localStorage.setItem('channelOrder', JSON.stringify(newOrder))
+  }
+
   // Set default active channel (or reset to null if no channels)
   useEffect(() => {
     if (channelNames.length > 0 && !activeChannel) {
@@ -597,7 +761,10 @@ export default function Home() {
     }
   }, [channelNames, activeChannel])
 
-  const currentChannelVideos = activeChannel ? channelData[activeChannel] || [] : videos
+  const currentChannelVideos = useMemo(
+    () => (activeChannel ? channelData[activeChannel] || [] : videos),
+    [activeChannel, channelData, videos]
+  )
 
   // Apply filter and sort (newest first by YouTube upload date)
   const filteredAndSortedVideos = useMemo(() => {
@@ -608,6 +775,8 @@ export default function Home() {
       filtered = filtered.filter(v => v.watch_count === 0)
     } else if (filterType === 'watched') {
       filtered = filtered.filter(v => v.watch_count > 0)
+    } else if (filterType === 'favorite') {
+      filtered = filtered.filter(v => Boolean(v.is_favorite))
     }
 
     // Sort: newest first by published_at (YouTube upload date), fallback to created_at
@@ -621,6 +790,7 @@ export default function Home() {
   }, [currentChannelVideos, filterType])
 
   const watchedInChannel = currentChannelVideos.filter(v => v.watch_count > 0).length
+  const favoriteInChannel = currentChannelVideos.filter(v => Boolean(v.is_favorite)).length
   const totalInChannel = currentChannelVideos.length
   const progressPercent = totalInChannel > 0 ? Math.round((watchedInChannel / totalInChannel) * 100) : 0
 
@@ -634,15 +804,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-8 md:pb-10">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[var(--surface)]/70 backdrop-blur-lg border-b border-[var(--border)] supports-[backdrop-filter]:bg-[var(--surface)]/60">
-        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+        <div className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden relative group cursor-pointer hover:scale-110 transition-transform duration-300">
               <img
-                src="/assets/theme/teacher_avatar.jpg"
-                alt="Teacher Avatar"
+                src="/icon-192.png"
+                alt="Learning Mate App Icon"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none'
@@ -658,7 +828,7 @@ export default function Home() {
 
           <div className="flex items-center gap-2 md:gap-4">
             {/* Streak Badge */}
-            <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${streak > 0
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all ${streak > 0
               ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/30'
               : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)] border border-[var(--border)]'
               }`}>
@@ -761,56 +931,106 @@ export default function Home() {
         </div>
       )}
 
-      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-4 md:py-8">
+      <main className="max-w-6xl 2xl:max-w-[1600px] mx-auto px-4 py-2 md:py-3">
         {/* Channel Tabs & Content */}
         <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
           {/* Channel Tabs */}
           {channelNames.length > 0 && (
-            <div className="border-b border-[var(--border)] overflow-x-auto bg-[var(--background-subtle)] scrollbar-hide">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={channelNames}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  <div className="flex px-2 md:px-4 py-2 gap-1 md:gap-2">
-                    {channelNames.map((channelName) => {
-                      const channelVideos = channelData[channelName]
-                      const watched = channelVideos.filter(v => v.watch_count > 0).length
-                      const total = channelVideos.length
-                      const isActive = activeChannel === channelName
+            <div className="border-b border-[var(--border)] bg-[var(--background-subtle)]">
+              {/* Mobile: icon-based channel picker without horizontal scroll */}
+              <div className="md:hidden px-2 py-1.5 flex flex-wrap gap-2">
+                {channelNames.map((channelName, index) => {
+                  const channelVideos = channelData[channelName]
+                  const watched = channelVideos.filter(v => v.watch_count > 0).length
+                  const total = channelVideos.length
+                  const isActive = activeChannel === channelName
 
-                      return (
-                        <SortableChannelTab
-                          key={channelName}
-                          channelName={channelName}
-                          watched={watched}
-                          total={total}
-                          isActive={isActive}
-                          onSelect={() => setActiveChannel(channelName)}
-                          onRename={() => handleRenameChannel(channelName)}
-                          onDelete={() => handleDeleteChannel(channelName)}
-                        />
-                      )
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                  return (
+                    <SortableChannelTab
+                      key={channelName}
+                      channelName={channelName}
+                      avatarUrl={channelAvatars[normalizeChannelKey(channelName)]}
+                      watched={watched}
+                      total={total}
+                      isActive={isActive}
+                      onSelect={() => {
+                        setMobileChannelMenu(null)
+                        setActiveChannel(channelName)
+                      }}
+                      onRename={() => handleRenameChannel(channelName)}
+                      onDelete={() => {
+                        setMobileChannelMenu(null)
+                        handleDeleteChannel(channelName)
+                      }}
+                      enableLongPressMenu
+                      showMobileMenu={mobileChannelMenu === channelName}
+                      canMoveLeft={index > 0}
+                      canMoveRight={index < channelNames.length - 1}
+                      onLongPressMenu={() => setMobileChannelMenu(channelName)}
+                      onMoveLeft={() => moveChannelByOffset(channelName, -1)}
+                      onMoveRight={() => moveChannelByOffset(channelName, 1)}
+                    />
+                  )
+                })}
+              </div>
+
+              {activeChannel && (
+                <div className="md:hidden px-4 pb-2 text-sm">
+                  <span className="font-semibold text-[var(--foreground)]">{activeChannel}</span>
+                  <span className="ml-2 text-xs text-[var(--foreground-muted)]">
+                    {watchedInChannel}/{totalInChannel}
+                  </span>
+                </div>
+              )}
+
+              {/* Desktop: sortable channel tabs */}
+              <div className="hidden md:block overflow-x-auto scrollbar-hide">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={channelNames}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    <div className="flex px-2 md:px-4 py-1.5 gap-1 md:gap-2">
+                      {channelNames.map((channelName) => {
+                        const channelVideos = channelData[channelName]
+                        const watched = channelVideos.filter(v => v.watch_count > 0).length
+                        const total = channelVideos.length
+                        const isActive = activeChannel === channelName
+
+                        return (
+                          <SortableChannelTab
+                            key={channelName}
+                            channelName={channelName}
+                            avatarUrl={channelAvatars[normalizeChannelKey(channelName)]}
+                            watched={watched}
+                            total={total}
+                            isActive={isActive}
+                            onSelect={() => setActiveChannel(channelName)}
+                            onRename={() => handleRenameChannel(channelName)}
+                            onDelete={() => handleDeleteChannel(channelName)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
             </div>
           )}
 
           {/* Progress Bar & Filters */}
           {activeChannel && totalInChannel > 0 && (
-            <div className="px-4 md:px-6 py-6 border-b border-[#e8e4db] bg-white">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-[#e8e4db] bg-white">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                 {/* Filter Buttons */}
                 <div className="flex bg-[#f7f5f0] p-1.5 rounded-2xl w-full md:w-auto">
                   <button
                     onClick={() => setFilterType('all')}
-                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'all'
+                    className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-bold rounded-xl transition-all ${filterType === 'all'
                       ? 'bg-white text-[#4a4a4a] shadow-sm'
                       : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
                       }`}
@@ -819,7 +1039,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setFilterType('unwatched')}
-                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'unwatched'
+                    className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-bold rounded-xl transition-all ${filterType === 'unwatched'
                       ? 'bg-white text-[#eebb76] shadow-sm'
                       : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
                       }`}
@@ -828,12 +1048,22 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setFilterType('watched')}
-                    className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all ${filterType === 'watched'
+                    className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-bold rounded-xl transition-all ${filterType === 'watched'
                       ? 'bg-white text-[#6b9e78] shadow-sm'
                       : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
                       }`}
                   >
                     완료 <span className="hidden sm:inline">({watchedInChannel})</span>
+                  </button>
+                  <button
+                    onClick={() => setFilterType('favorite')}
+                    className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 ${filterType === 'favorite'
+                      ? 'bg-white text-[#d39b00] shadow-sm'
+                      : 'text-[#8c8c8c] hover:text-[#4a4a4a]'
+                      }`}
+                  >
+                    <Star size={12} className={filterType === 'favorite' ? 'fill-current' : ''} />
+                    즐겨찾기 <span className="hidden sm:inline">({favoriteInChannel})</span>
                   </button>
                 </div>
 
@@ -860,31 +1090,33 @@ export default function Home() {
           )}
 
           {/* Video Grid */}
-          <div className="px-4 pb-8">
+          <div className="px-4 pb-4">
             {loading ? (
-              <div className="py-16 text-center text-gray-400">
+              <div className="py-10 text-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-3"></div>
                 영상 목록 불러오는 중...
               </div>
             ) : videos.length === 0 ? (
-              <div className="py-16 text-center">
+              <div className="py-10 text-center">
                 <p className="text-gray-400 text-lg mb-2">📭</p>
                 <p className="text-gray-500">등록된 영상이 없습니다.</p>
                 <p className="text-sm text-gray-400 mt-1">위에서 영상을 추가해보세요!</p>
               </div>
             ) : filteredAndSortedVideos.length === 0 ? (
-              <div className="py-16 text-center text-gray-400">
+              <div className="py-10 text-center text-gray-400">
                 {filterType === 'unwatched' ? '미시청 영상이 없습니다. 🎉' :
                   filterType === 'watched' ? '시청한 영상이 없습니다.' :
+                    filterType === 'favorite' ? '즐겨찾기한 영상이 없습니다.' :
                     '이 채널에 영상이 없습니다.'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {filteredAndSortedVideos.map(video => (
                   <VideoCard
                     key={video.id}
                     video={video}
                     onToggleWatch={handleToggleWatch}
+                    onToggleFavorite={handleToggleFavorite}
                     onPlay={(v) => {
                       setOpenWithNotes(false)
                       setSelectedVideoForPlayer(v)

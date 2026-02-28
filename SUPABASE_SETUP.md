@@ -13,13 +13,13 @@ This project uses Supabase for storing videos and watch history.
 1. Go to **Project Settings** (Cog icon) -> **API**.
 2. Copy the `Project URL`.
 3. Copy the `anon` `public` key.
-4. Rename `.env.local.example` to `.env.local` in your project root.
-5. Paste the URL and Key into the file.
+4. Create `.env.local` in your project root (or copy from `.env.example`).
+5. Paste the URL and Key into the file (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 
 ## Step 3: Create Tables
 1. Go to the **SQL Editor** (icon on the left sidebar).
 2. Click "New Query".
-3. Open the `schema.sql` file from this project.
+3. Open the `schema.sql` file from this project (it includes `users`, `channels`, `videos`, `watch_logs`, `notes`).
 4. Copy the entire content and paste it into the Supabase SQL Editor.
 5. Click **Run**.
 

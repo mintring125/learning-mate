@@ -15,6 +15,7 @@ export default function ChangePasswordPage() {
     const [error, setError] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
+    const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다.'
 
     // Redirect if not logged in
     if (!authLoading && !user) {
@@ -60,8 +61,8 @@ export default function ChangePasswordPage() {
             }
 
             setIsSuccess(true)
-        } catch (err: any) {
-            setError(err.message || '비밀번호 변경에 실패했습니다.')
+        } catch (err: unknown) {
+            setError(getErrorMessage(err))
         } finally {
             setIsSubmitting(false)
         }

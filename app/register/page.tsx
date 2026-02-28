@@ -11,6 +11,7 @@ export default function RegisterPage() {
     const [error, setError] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
+    const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : '회원가입에 실패했습니다.'
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -41,8 +42,8 @@ export default function RegisterPage() {
             }
 
             setIsSuccess(true)
-        } catch (err: any) {
-            setError(err.message || '회원가입에 실패했습니다.')
+        } catch (err: unknown) {
+            setError(getErrorMessage(err))
         } finally {
             setIsSubmitting(false)
         }

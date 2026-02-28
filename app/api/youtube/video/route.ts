@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Failed to fetch video'
+
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url)
@@ -43,8 +45,8 @@ export async function GET(request: Request) {
             published_at: snippet.publishedAt
         })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching video:', error)
-        return NextResponse.json({ error: error.message || 'Failed to fetch video' }, { status: 500 })
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
     }
 }

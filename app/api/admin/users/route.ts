@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 
-export async function GET(request: Request) {
+export async function GET() {
     // SECURITY TODO: This should verify the requester is an admin
     // Currently relying on client-side check or if we had sessions
     // For now, we just list users (assuming this route is protected or hidden)
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ users })
 
-    } catch (error) {
+    } catch {
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
     }
 }

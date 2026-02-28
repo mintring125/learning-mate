@@ -14,6 +14,7 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(true)
     const [error, setError] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : '로그인에 실패했습니다.'
 
     // If user is already logged in, redirect to main page
     useEffect(() => {
@@ -29,8 +30,8 @@ export default function LoginPage() {
 
         try {
             await login(username, password, rememberMe)
-        } catch (err: any) {
-            setError(err.message || '로그인에 실패했습니다.')
+        } catch (err: unknown) {
+            setError(getErrorMessage(err))
         } finally {
             setIsSubmitting(false)
         }

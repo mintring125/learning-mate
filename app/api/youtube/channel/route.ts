@@ -1,6 +1,9 @@
 import { google } from 'googleapis'
 import { NextResponse } from 'next/server'
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Failed to fetch channel videos'
+type PlaylistItemSnippet = { snippet?: { resourceId?: { videoId?: string | null } } }
+
 // Parse ISO 8601 duration to seconds
 function parseDuration(duration: string): number {
     const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
@@ -32,6 +35,7 @@ export async function GET(request: Request) {
 
     try {
         let channelId = ''
+        let channelThumbnailUrl = ''
 
         // 1. Extract Channel ID or Handle
         let handle = ''
@@ -59,6 +63,11 @@ export async function GET(request: Request) {
             if (!channel) throw new Error('Channel not found')
             uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads || ''
             channelTitle = channel.snippet?.title || ''
+            channelThumbnailUrl =
+                channel.snippet?.thumbnails?.high?.url ||
+                channel.snippet?.thumbnails?.medium?.url ||
+                channel.snippet?.thumbnails?.default?.url ||
+                ''
             channelId = channel.id || channelId
         } else if (handle) {
             const response = await youtube.channels.list({
@@ -69,6 +78,11 @@ export async function GET(request: Request) {
             if (!channel) throw new Error('Channel not found')
             uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads || ''
             channelTitle = channel.snippet?.title || ''
+            channelThumbnailUrl =
+                channel.snippet?.thumbnails?.high?.url ||
+                channel.snippet?.thumbnails?.medium?.url ||
+                channel.snippet?.thumbnails?.default?.url ||
+                ''
             channelId = channel.id || ''
         }
 
@@ -89,16 +103,17 @@ export async function GET(request: Request) {
         const maxPages = 100 // Increased limit (100 pages * 50 = 5000 videos max, excluding Shorts)
 
         do {
-            const playlistResponse: any = await youtube.playlistItems.list({
+            const playlistResponse = await youtube.playlistItems.list({
                 part: ['snippet'],
                 playlistId: uploadsPlaylistId,
                 maxResults: 50,
                 pageToken: nextPageToken,
-            })
+            }) as unknown as { data: { items?: PlaylistItemSnippet[]; nextPageToken?: string | null } }
+            const playlistItems = playlistResponse.data.items || []
 
-            const videoIds = playlistResponse.data.items
-                ?.map((item: any) => item.snippet?.resourceId?.videoId)
-                .filter((id: any): id is string => !!id) || []
+            const videoIds = playlistItems
+                .map((item) => item.snippet?.resourceId?.videoId)
+                .filter((id): id is string => !!id)
 
             // Fetch video details to check duration (for Shorts filtering)
             if (videoIds.length > 0) {
@@ -141,12 +156,13 @@ export async function GET(request: Request) {
             channel: {
                 id: channelId,
                 title: channelTitle,
+                thumbnail_url: channelThumbnailUrl,
                 uploadsPlaylistId: uploadsPlaylistId
             }
         })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('YouTube API Error:', error)
-        return NextResponse.json({ error: error.message || 'Failed to fetch channel videos' }, { status: 500 })
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
     }
 }

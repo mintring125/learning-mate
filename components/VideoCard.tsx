@@ -1,12 +1,13 @@
 'use client'
 
 import { VideoWithLog } from '@/types'
-import { Play, Youtube, Sparkles, CheckCircle2, Circle, StickyNote } from 'lucide-react'
+import { Play, Youtube, Sparkles, CheckCircle2, Circle, StickyNote, Star } from 'lucide-react'
 import { useState } from 'react'
 
 interface VideoCardProps {
   video: VideoWithLog
   onToggleWatch: (id: string, isWatched: boolean) => Promise<void>
+  onToggleFavorite: (id: string, isFavorite: boolean) => Promise<void>
   onPlay: (video: VideoWithLog) => void
   onOpenWithNotes?: (video: VideoWithLog) => void
 }
@@ -19,9 +20,11 @@ const isNewVideo = (publishedAt?: string): boolean => {
   return new Date(publishedAt) > oneWeekAgo
 }
 
-export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNotes }: VideoCardProps) {
+export default function VideoCard({ video, onToggleWatch, onToggleFavorite, onPlay, onOpenWithNotes }: VideoCardProps) {
   const [loading, setLoading] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
   const isWatched = video.watch_count > 0
+  const isFavorite = Boolean(video.is_favorite)
   const isNew = isNewVideo(video.published_at)
 
   const handleToggle = async (e: React.MouseEvent) => {
@@ -36,6 +39,13 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
     if (onOpenWithNotes) {
       onOpenWithNotes(video)
     }
+  }
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setFavoriteLoading(true)
+    await onToggleFavorite(video.id, isFavorite)
+    setFavoriteLoading(false)
   }
 
   return (
@@ -85,13 +95,13 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
       </div>
 
       {/* Content */}
-      <div className="px-5 pb-5 pt-1 flex-1 flex flex-col">
-        <h3 className={`font-bold text-sm mb-3 leading-relaxed transition-colors line-clamp-2 ${isWatched ? 'text-[var(--foreground-muted)]' : 'text-[var(--foreground)] group-hover:text-[var(--primary)]'}`} title={video.title}>
+      <div className="px-4 pb-4 pt-1 flex-1 flex flex-col">
+        <h3 className={`font-bold text-sm mb-2 leading-relaxed transition-colors line-clamp-2 ${isWatched ? 'text-[var(--foreground-muted)]' : 'text-[var(--foreground)] group-hover:text-[var(--primary)]'}`} title={video.title}>
           {video.title}
         </h3>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs mb-4">
+        <div className="flex items-center justify-between text-xs mb-3">
           <span className={`px-2 py-0.5 rounded-md font-medium ${isWatched ? 'bg-[var(--primary-light)] text-[var(--primary)]' : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)]'}`}>
             {isWatched ? '시청 완료' : '미시청'}
           </span>
@@ -103,11 +113,11 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-2 gap-2 mt-auto">
+        <div className="flex items-center gap-2 mt-auto">
           <button
             onClick={handleToggle}
             disabled={loading}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl font-bold transition-all text-xs ${isWatched
+            className={`flex-1 h-10 flex items-center justify-center gap-1.5 px-3 rounded-2xl font-bold transition-all text-xs ${isWatched
               ? 'bg-[var(--primary-light)] text-[var(--primary)] hover:bg-[#d9e6de]'
               : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)] hover:bg-[var(--border-light)] hover:text-[var(--foreground)]'
               }`}
@@ -122,8 +132,24 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
             {isWatched ? '완료' : '체크'}
           </button>
           <button
+            onClick={handleToggleFavorite}
+            disabled={favoriteLoading}
+            className={`w-12 h-10 shrink-0 rounded-2xl transition-all flex items-center justify-center ${isFavorite
+              ? 'bg-[#fff3c9] text-[#e2a400] hover:bg-[#ffecb4]'
+              : 'bg-[var(--background-subtle)] text-[var(--foreground-muted)] hover:bg-[var(--border-light)] hover:text-[var(--foreground)]'
+              }`}
+            title="즐겨찾기"
+            aria-label="즐겨찾기"
+          >
+            {favoriteLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Star size={22} strokeWidth={2.4} className={isFavorite ? 'fill-current' : ''} />
+            )}
+          </button>
+          <button
             onClick={handleOpenNotes}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl font-bold transition-all text-xs bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[#ffeac7]"
+            className="flex-1 h-10 flex items-center justify-center gap-1.5 px-3 rounded-2xl font-bold transition-all text-xs bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[#ffeac7]"
           >
             <StickyNote size={16} strokeWidth={2.5} />
             메모
@@ -133,4 +159,3 @@ export default function VideoCard({ video, onToggleWatch, onPlay, onOpenWithNote
     </div>
   )
 }
-

@@ -9,13 +9,30 @@ interface AddVideoFormProps {
 }
 
 type Status = 'idle' | 'detecting' | 'fetching' | 'importing' | 'success' | 'error'
+type ImportedChannelVideo = {
+  id: string
+  title: string
+  channel_name: string
+  thumbnail_url?: string
+  published_at?: string
+}
+type ChannelApiResponse = {
+  videos?: ImportedChannelVideo[]
+  channel?: {
+    id: string
+    title: string
+    thumbnail_url?: string
+    uploadsPlaylistId: string
+  }
+  error?: string
+}
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : '요청 처리 중 오류가 발생했습니다.'
 
 export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [statusMessage, setStatusMessage] = useState('')
-  const [importCount, setImportCount] = useState(0)
 
   // Detect if URL is a single video or channel
   const detectUrlType = (inputUrl: string): 'video' | 'channel' | 'unknown' => {
@@ -90,8 +107,6 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
 
       setStatus('success')
       setStatusMessage('영상이 등록되었습니다!')
-      setImportCount(1)
-
       setTimeout(() => {
         setIsOpen(false)
         setUrl('')
@@ -100,10 +115,10 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
         onVideoAdded()
       }, 1500)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding video:', error)
       setStatus('error')
-      setStatusMessage(error.message || '영상 등록에 실패했습니다.')
+      setStatusMessage(getErrorMessage(error))
     }
   }
 
@@ -114,7 +129,7 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
 
     try {
       const res = await fetch(`/api/youtube/channel?channelUrl=${encodeURIComponent(url)}`)
-      const data = await res.json()
+      const data: ChannelApiResponse = await res.json()
 
       if (!res.ok) throw new Error(data.error || '채널 정보를 가져올 수 없습니다.')
 
@@ -127,7 +142,7 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
       setStatusMessage(`${videos.length}개 영상을 등록하는 중...`)
 
       // Check for existing deleted videos to restore
-      const videoUrls = videos.map((v: any) => `https://www.youtube.com/watch?v=${v.id}`)
+      const videoUrls = videos.map((v) => `https://www.youtube.com/watch?v=${v.id}`)
       console.log('[AddVideoForm] Looking for deleted videos, URLs count:', videoUrls.length)
 
       // Process in batches of 30 to avoid URL length limits
@@ -177,11 +192,11 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
 
       // Filter to only new videos (not existing and not restored)
       const videosToInsert = videos
-        .filter((v: any) => {
+        .filter((v) => {
           const url = `https://www.youtube.com/watch?v=${v.id}`
           return !existingUrls.has(url) && !restoredUrls.has(url)
         })
-        .map((v: any) => ({
+        .map((v) => ({
           title: v.title,
           channel_name: v.channel_name,
           url: `https://www.youtube.com/watch?v=${v.id}`,
@@ -203,11 +218,11 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
           youtube_channel_id: data.channel.id,
           name: data.channel.title,
           title: data.channel.title,
+          thumbnail_url: data.channel.thumbnail_url || null,
           uploads_playlist_id: data.channel.uploadsPlaylistId
         }, { onConflict: 'youtube_channel_id' })
       }
 
-      const totalCount = videosToInsert.length + restoredUrls.size
       const restoredCount = restoredUrls.size
 
       setStatus('success')
@@ -216,8 +231,6 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
       } else {
         setStatusMessage(`${videosToInsert.length}개 영상이 등록되었습니다!`)
       }
-      setImportCount(totalCount)
-
       setTimeout(() => {
         setIsOpen(false)
         setUrl('')
@@ -226,10 +239,10 @@ export default function AddVideoForm({ onVideoAdded }: AddVideoFormProps) {
         onVideoAdded()
       }, 2000)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error importing channel:', error)
       setStatus('error')
-      setStatusMessage(error.message || '채널 가져오기에 실패했습니다.')
+      setStatusMessage(getErrorMessage(error))
     }
   }
 

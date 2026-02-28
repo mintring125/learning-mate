@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Failed to list emblems'
+
 export async function GET() {
     try {
         const emblemDir = path.join(process.cwd(), 'public', 'img_bonus')
@@ -31,8 +33,8 @@ export async function GET() {
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 
         return NextResponse.json({ emblems })
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error listing emblems:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
     }
 }

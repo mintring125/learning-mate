@@ -59,14 +59,15 @@ create table if not exists videos (
   channel_id uuid references channels(id) on delete set null,
   duration text,
   published_at timestamp with time zone, -- YouTube original upload date
+  is_deleted boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Add published_at column if not exists
 alter table videos add column if not exists published_at timestamp with time zone;
 
--- Add quiz_completed column if not exists
-alter table videos add column if not exists quiz_completed boolean default false;
+-- Add is_deleted column if not exists (soft delete)
+alter table videos add column if not exists is_deleted boolean default false;
 
 -- 4. Watch Logs Table (Updated)
 create table if not exists watch_logs (
@@ -77,17 +78,33 @@ create table if not exists watch_logs (
   watched_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 5. Row Level Security
+-- 5. Notes Table
+create table if not exists notes (
+  id uuid default uuid_generate_v4() primary key,
+  video_id uuid references videos(id) on delete cascade not null unique,
+  content text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 6. Row Level Security
 alter table users enable row level security;
 alter table channels enable row level security;
 alter table videos enable row level security;
 alter table watch_logs enable row level security;
+alter table notes enable row level security;
 
 -- Policies (Public for prototype)
+drop policy if exists "Public access" on users;
 create policy "Public access" on users for all using (true) with check (true);
+drop policy if exists "Public access" on channels;
 create policy "Public access" on channels for all using (true) with check (true);
+drop policy if exists "Public access" on videos;
 create policy "Public access" on videos for all using (true) with check (true);
+drop policy if exists "Public access" on watch_logs;
 create policy "Public access" on watch_logs for all using (true) with check (true);
+drop policy if exists "Public access" on notes;
+create policy "Public access" on notes for all using (true) with check (true);
 `
 
   const copyToClipboard = () => {
@@ -108,8 +125,8 @@ create policy "Public access" on watch_logs for all using (true) with check (tru
 
         <div className="p-8 space-y-6">
           <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-yellow-800 text-sm">
-            <strong>Note:</strong> If you already have tables, this script tries to create them if they don't exist.
-            If you see errors about "relation already exists", it usually means the table is already there.
+            <strong>Note:</strong> If you already have tables, this script tries to create them if they don&apos;t exist.
+            If you see errors about &quot;relation already exists&quot;, it usually means the table is already there.
             However, for a clean start with new features, you might want to <strong>delete (drop) existing tables</strong> in Supabase first.
           </div>
 
@@ -157,7 +174,7 @@ create policy "Public access" on watch_logs for all using (true) with check (tru
               Verification
             </h2>
             <p className="text-gray-600 ml-8">
-              After running this, you will have a <code>test</code> user (password: <code>test</code>) and support for Channels.
+              After running this, you will have an admin user <code>mintkaori</code> (password: <code>mintkaori</code>) and support for Channels/Notes.
             </p>
           </div>
         </div>

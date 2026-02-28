@@ -39,7 +39,7 @@ export default function ApprovalsPage() {
                 const data = await res.json()
                 setPendingUsers(data.users)
             }
-        } catch (err) {
+        } catch {
             setError('목록을 불러오는데 실패했습니다.')
         } finally {
             setLoading(false)
@@ -63,7 +63,7 @@ export default function ApprovalsPage() {
                 const data = await res.json()
                 setError(data.message || '처리에 실패했습니다.')
             }
-        } catch (err) {
+        } catch {
             setError('처리 중 오류가 발생했습니다.')
         } finally {
             setProcessingId(null)

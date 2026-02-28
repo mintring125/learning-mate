@@ -2,6 +2,23 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 import { google } from 'googleapis'
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Unknown error'
+
+type ChannelDebugInfo = {
+    name?: string | null
+    title?: string | null
+    youtube_channel_id?: string | null
+    uploads_playlist_id?: string | null
+    thumbnail_url?: string | null
+    status: 'processing' | 'success' | 'error'
+    error?: string
+    meta_updated?: boolean
+    cached_now?: boolean
+    videosChecked?: number
+    newVideosAdded?: number
+    videosRestored?: number
+}
+
 // Parse ISO 8601 duration to seconds
 function parseDuration(duration: string): number {
     const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
@@ -45,11 +62,11 @@ export async function POST() {
 
         const youtube = google.youtube({ version: 'v3', auth: apiKey })
         let totalNewVideos = 0
-        const debugInfo: any[] = []
+        const debugInfo: ChannelDebugInfo[] = []
 
         // 2. Loop through channels
         for (const channel of channels) {
-            const channelDebug: any = {
+            const channelDebug: ChannelDebugInfo = {
                 name: channel.name,
                 title: channel.title,
                 youtube_channel_id: channel.youtube_channel_id,
@@ -67,16 +84,59 @@ export async function POST() {
                 }
 
                 let uploadsId = channel.uploads_playlist_id
+                let channelDisplayName = channel.name || channel.title || 'Unknown Channel'
+                let channelThumbnailUrl = channel.thumbnail_url || null
+
+                // Refresh channel metadata (playlist id, title, thumbnail) from YouTube.
+                const channelRes = await youtube.channels.list({
+                    part: ['contentDetails', 'snippet'],
+                    id: [channel.youtube_channel_id]
+                })
+                const channelItem = channelRes.data.items?.[0]
+                if (!channelItem) {
+                    channelDebug.status = 'error'
+                    channelDebug.error = 'Channel not found in YouTube API'
+                    debugInfo.push(channelDebug)
+                    continue
+                }
+
+                const fetchedUploadsId = channelItem.contentDetails?.relatedPlaylists?.uploads || null
+                const fetchedTitle = channelItem.snippet?.title || channelDisplayName
+                const fetchedThumbnailUrl =
+                    channelItem.snippet?.thumbnails?.high?.url ||
+                    channelItem.snippet?.thumbnails?.medium?.url ||
+                    channelItem.snippet?.thumbnails?.default?.url ||
+                    null
+
+                uploadsId = uploadsId || fetchedUploadsId
+                channelDisplayName = fetchedTitle
+                channelThumbnailUrl = fetchedThumbnailUrl
+
+                const shouldUpdateChannelMeta =
+                    !!fetchedUploadsId && fetchedUploadsId !== channel.uploads_playlist_id ||
+                    fetchedTitle !== (channel.name || channel.title) ||
+                    fetchedThumbnailUrl !== (channel.thumbnail_url || null)
+
+                if (shouldUpdateChannelMeta) {
+                    const { error: updateChannelError } = await supabase
+                        .from('channels')
+                        .update({
+                            uploads_playlist_id: fetchedUploadsId || channel.uploads_playlist_id,
+                            name: fetchedTitle,
+                            title: fetchedTitle,
+                            thumbnail_url: fetchedThumbnailUrl
+                        })
+                        .eq('youtube_channel_id', channel.youtube_channel_id)
+
+                    if (updateChannelError) {
+                        console.warn('[Sync] Failed to update channel metadata:', updateChannelError.message)
+                    } else {
+                        channelDebug.meta_updated = true
+                    }
+                }
 
                 // If uploads_playlist_id is not cached, fetch it
                 if (!uploadsId) {
-                    console.log(`[Sync] Fetching uploads playlist for channel: ${channel.youtube_channel_id}`)
-                    const channelRes = await youtube.channels.list({
-                        part: ['contentDetails'],
-                        id: [channel.youtube_channel_id]
-                    })
-
-                    uploadsId = channelRes.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads
                     if (!uploadsId) {
                         channelDebug.status = 'error'
                         channelDebug.error = 'Could not get uploads playlist from YouTube API'
@@ -103,8 +163,8 @@ export async function POST() {
 
                 const fetchedItems = playlistRes.data.items || []
                 const videoIds = fetchedItems
-                    .map((item: any) => item.snippet?.resourceId?.videoId)
-                    .filter((id: any): id is string => !!id)
+                    .map((item) => item.snippet?.resourceId?.videoId)
+                    .filter((id): id is string => !!id)
 
                 // Fetch video details to filter Shorts
                 if (videoIds.length > 0) {
@@ -128,8 +188,6 @@ export async function POST() {
                         if (isShort) continue
 
                         const videoUrl = `https://www.youtube.com/watch?v=${videoId}`
-                        const channelDisplayName = channel.name || channel.title || 'Unknown Channel'
-
                         // Check if video already exists (including deleted ones)
                         const { data: existing } = await supabase
                             .from('videos')
@@ -164,12 +222,13 @@ export async function POST() {
 
                 channelDebug.status = 'success'
                 channelDebug.videosChecked = videoIds.length
+                channelDebug.thumbnail_url = channelThumbnailUrl
                 debugInfo.push(channelDebug)
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error(`Failed to sync channel ${channel.name}`, err)
                 channelDebug.status = 'error'
-                channelDebug.error = err.message || 'Unknown error'
+                channelDebug.error = getErrorMessage(err)
                 debugInfo.push(channelDebug)
             }
         }
@@ -185,8 +244,8 @@ export async function POST() {
             }
         })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Sync error:', error)
-        return NextResponse.json({ error: error.message, newVideos: 0 }, { status: 500 })
+        return NextResponse.json({ error: getErrorMessage(error), newVideos: 0 }, { status: 500 })
     }
 }
