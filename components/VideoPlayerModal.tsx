@@ -1,7 +1,7 @@
 'use client'
 
 import { VideoWithLog } from '@/types'
-import { X, CheckCircle, Circle, ExternalLink, StickyNote, Save, ChevronDown, ChevronUp, Eye, Edit3, Mic, MicOff } from 'lucide-react'
+import { X, CheckCircle, Circle, ExternalLink, StickyNote, ChevronDown, ChevronUp, Eye, Edit3, Mic, MicOff } from 'lucide-react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 type STTLang = 'ko-KR' | 'en-US' | 'ja-JP'
@@ -40,6 +40,43 @@ declare global {
         SpeechRecognition?: SpeechRecognitionConstructorLike
         webkitSpeechRecognition?: SpeechRecognitionConstructorLike
     }
+}
+
+const normalizeWhitespace = (text: string) => text.replace(/\s+/g, ' ').trim()
+
+// Merge final/interim transcripts while removing overlapped tail-head tokens.
+const mergeTranscriptWithOverlap = (finalText: string, interimText: string) => {
+    const finalTokens = normalizeWhitespace(finalText).split(' ').filter(Boolean)
+    const interimTokens = normalizeWhitespace(interimText).split(' ').filter(Boolean)
+
+    if (finalTokens.length === 0) return interimTokens.join(' ')
+    if (interimTokens.length === 0) return finalTokens.join(' ')
+
+    const maxOverlap = Math.min(finalTokens.length, interimTokens.length)
+    let overlap = 0
+    for (let len = maxOverlap; len >= 1; len--) {
+        const finalTail = finalTokens.slice(finalTokens.length - len).join(' ')
+        const interimHead = interimTokens.slice(0, len).join(' ')
+        if (finalTail === interimHead) {
+            overlap = len
+            break
+        }
+    }
+
+    return [...finalTokens, ...interimTokens.slice(overlap)].join(' ')
+}
+
+// Reduce repeated words: "저는 저는 저는 김형석입니다" -> "저는 김형석입니다"
+const removeConsecutiveDuplicateWords = (text: string) => {
+    const tokens = normalizeWhitespace(text).split(' ').filter(Boolean)
+    if (tokens.length <= 1) return tokens.join(' ')
+    const cleaned: string[] = [tokens[0]]
+    for (let i = 1; i < tokens.length; i++) {
+        if (tokens[i] !== cleaned[cleaned.length - 1]) {
+            cleaned.push(tokens[i])
+        }
+    }
+    return cleaned.join(' ')
 }
 
 // 플래시카드 토글 아이템 컴포넌트
@@ -95,15 +132,24 @@ function NoteRenderer({ content }: { content: string }) {
     )
 }
 
+// Append a new speech chunk while avoiding common STT overlap/replay cases.
+const appendTranscriptChunk = (baseText: string, chunkText: string) => {
+    const base = normalizeWhitespace(baseText)
+    const chunk = normalizeWhitespace(chunkText)
+    if (!chunk) return base
+    if (!base) return chunk
+    if (base === chunk) return base
+    if (base.endsWith(chunk)) return base
+    if (chunk.startsWith(base)) return chunk
+    return mergeTranscriptWithOverlap(base, chunk)
+}
+
 interface NotesPanelProps {
     noteMode: 'edit' | 'preview'
     setNoteMode: (mode: 'edit' | 'preview') => void
     noteLoading: boolean
     noteContent: string
     setNoteContent: (content: string) => void
-    noteSaving: boolean
-    noteSaved: boolean
-    saveNote: () => void
     closeNotes: () => void
     sttSupported: boolean
     sttLang: STTLang
@@ -114,6 +160,7 @@ interface NotesPanelProps {
     startSTT: () => void
     stopSTT: () => void
     compact?: boolean
+    textareaRef: { current: HTMLTextAreaElement | null }
 }
 
 function NotesPanel({
@@ -122,9 +169,6 @@ function NotesPanel({
     noteLoading,
     noteContent,
     setNoteContent,
-    noteSaving,
-    noteSaved,
-    saveNote,
     closeNotes,
     sttSupported,
     sttLang,
@@ -135,6 +179,7 @@ function NotesPanel({
     startSTT,
     stopSTT,
     compact = false,
+    textareaRef,
 }: NotesPanelProps) {
     return (
         <div className="flex flex-col h-full min-h-0">
@@ -258,13 +303,14 @@ function NotesPanel({
                 </div>
             )}
 
-            <div className={`${compact ? 'p-3' : 'p-4'} flex-1 min-h-0 overflow-auto`}>
+            <div className={`${compact ? 'p-3' : 'p-4'} flex-1 min-h-0 overflow-auto overscroll-contain`}>
                 {noteLoading ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : noteMode === 'edit' ? (
                     <textarea
+                        ref={textareaRef}
                         value={noteContent}
                         onChange={(e) => setNoteContent(e.target.value)}
                         placeholder={`영상을 보며 메모를 작성해보세요...\n\n💡 중요한 내용\n📝 핵심 키워드\n\n📌 플래시카드 만들기:\n줄 앞에 /를 붙이면 복습 시 숨겨집니다!\n예시: /일본의 수도는 도쿄입니다`}
@@ -280,30 +326,6 @@ function NotesPanel({
                 )}
             </div>
 
-            <div className={`${compact ? 'p-3' : 'p-4'} border-t border-gray-200 bg-gray-50`}>
-                <button
-                    onClick={saveNote}
-                    disabled={noteSaving}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all ${noteSaved
-                        ? 'bg-green-500 text-white'
-                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg hover:shadow-amber-500/30'
-                        }`}
-                >
-                    {noteSaving ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : noteSaved ? (
-                        <>
-                            <CheckCircle size={18} />
-                            저장완료!
-                        </>
-                    ) : (
-                        <>
-                            <Save size={18} />
-                            메모 저장
-                        </>
-                    )}
-                </button>
-            </div>
         </div>
     )
 }
@@ -320,13 +342,18 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
     const [loading, setLoading] = useState(false)
     const [showNotes, setShowNotes] = useState(openWithNotes)
     const [noteContent, setNoteContent] = useState('')
-    const [noteSaving, setNoteSaving] = useState(false)
-    const [noteSaved, setNoteSaved] = useState(false)
     const [noteLoading, setNoteLoading] = useState(false)
     const [noteMode, setNoteMode] = useState<'edit' | 'preview'>('preview')
     const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
     const recognitionBufferRef = useRef('')
     const recognitionInterimRef = useRef('')
+    const recognitionLiveRef = useRef('')
+    const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const isNoteSavingRef = useRef(false)
+    const hasLoadedNoteRef = useRef(false)
+    const lastSavedNoteRef = useRef('')
+    const noteTextareaRef = useRef<HTMLTextAreaElement | null>(null)
     const [isListening, setIsListening] = useState(false)
     const [sttLang, setSttLang] = useState<STTLang>('ko-KR')
     const [slashPrefixEnabled, setSlashPrefixEnabled] = useState(false)
@@ -349,12 +376,13 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
         try {
             const res = await fetch(`/api/notes?videoId=${video.id}`)
             const data = await res.json()
-            if (data.note?.content) {
-                setNoteContent(data.note.content)
-            }
+            const loadedContent = data.note?.content ?? ''
+            setNoteContent(loadedContent)
+            lastSavedNoteRef.current = loadedContent
         } catch (error) {
             console.error('Failed to load note:', error)
         } finally {
+            hasLoadedNoteRef.current = true
             setNoteLoading(false)
         }
     }, [video.id])
@@ -369,35 +397,105 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
         if (!showNotes && recognitionRef.current) {
             recognitionRef.current.stop()
         }
+        if (!showNotes && autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current)
+            autoSaveTimerRef.current = null
+        }
     }, [showNotes])
 
     useEffect(() => {
         return () => {
+            if (stopTimerRef.current) {
+                clearTimeout(stopTimerRef.current)
+                stopTimerRef.current = null
+            }
+            if (autoSaveTimerRef.current) {
+                clearTimeout(autoSaveTimerRef.current)
+                autoSaveTimerRef.current = null
+            }
             if (recognitionRef.current) {
                 recognitionRef.current.stop()
             }
         }
     }, [])
 
+    // Lock page scroll while modal is open so only modal content scrolls.
+    useEffect(() => {
+        const prevOverflow = document.body.style.overflow
+        const prevOverscroll = document.body.style.overscrollBehavior
+        document.body.style.overflow = 'hidden'
+        document.body.style.overscrollBehavior = 'none'
+
+        return () => {
+            document.body.style.overflow = prevOverflow
+            document.body.style.overscrollBehavior = prevOverscroll
+        }
+    }, [])
+
     // 메모 저장
-    const saveNote = async () => {
-        setNoteSaving(true)
+    const saveNote = useCallback(async (
+        contentToSave: string,
+        options?: { keepalive?: boolean }
+    ) => {
+        if (isNoteSavingRef.current || contentToSave === lastSavedNoteRef.current) return
+        isNoteSavingRef.current = true
         try {
             const res = await fetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ videoId: video.id, content: noteContent })
+                keepalive: options?.keepalive,
+                body: JSON.stringify({ videoId: video.id, content: contentToSave })
             })
             if (res.ok) {
-                setNoteSaved(true)
-                setTimeout(() => setNoteSaved(false), 2000)
+                lastSavedNoteRef.current = contentToSave
             }
         } catch (error) {
             console.error('Failed to save note:', error)
         } finally {
-            setNoteSaving(false)
+            isNoteSavingRef.current = false
         }
-    }
+    }, [video.id])
+
+    const saveNoteOnClose = useCallback(() => {
+        void saveNote(noteContent, { keepalive: true })
+    }, [noteContent, saveNote])
+
+    useEffect(() => {
+        if (!showNotes || noteLoading || !hasLoadedNoteRef.current) return
+        if (noteContent === lastSavedNoteRef.current) return
+
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current)
+        }
+        autoSaveTimerRef.current = setTimeout(() => {
+            void saveNote(noteContent)
+        }, 1200)
+
+        return () => {
+            if (autoSaveTimerRef.current) {
+                clearTimeout(autoSaveTimerRef.current)
+                autoSaveTimerRef.current = null
+            }
+        }
+    }, [showNotes, noteLoading, noteContent, saveNote])
+
+    const handleCloseNotes = useCallback(() => {
+        saveNoteOnClose()
+        setShowNotes(false)
+    }, [saveNoteOnClose])
+
+    const handleToggleNotes = useCallback(() => {
+        if (showNotes) {
+            handleCloseNotes()
+            return
+        }
+        setShowNotes(true)
+    }, [showNotes, handleCloseNotes])
+
+    const handleCloseModal = useCallback(() => {
+        saveNoteOnClose()
+        onClose()
+    }, [saveNoteOnClose, onClose])
 
     const handleToggle = async () => {
         setLoading(true)
@@ -409,8 +507,13 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
     const startSTT = () => {
         const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SpeechRecognitionCtor || isListening) return
+        if (stopTimerRef.current) {
+            clearTimeout(stopTimerRef.current)
+            stopTimerRef.current = null
+        }
         recognitionBufferRef.current = ''
         recognitionInterimRef.current = ''
+        recognitionLiveRef.current = ''
 
         const recognition = new SpeechRecognitionCtor()
         recognition.lang = sttLang
@@ -418,23 +521,29 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
         recognition.interimResults = true
 
         recognition.onresult = (event) => {
-            let capturedFinal = ''
-            let capturedInterim = ''
-            const startIndex = event.resultIndex ?? 0
-            for (let i = startIndex; i < event.results.length; i++) {
+            let latestFinal = ''
+            let latestInterim = ''
+            for (let i = event.results.length - 1; i >= 0; i--) {
                 const result = event.results[i]
+                const transcript = normalizeWhitespace(result?.[0]?.transcript || '')
+                if (!transcript) continue
                 if (result?.isFinal) {
-                    capturedFinal += `${result[0]?.transcript || ''} `
-                } else {
-                    capturedInterim += `${result?.[0]?.transcript || ''} `
+                    if (!latestFinal) latestFinal = transcript
+                } else if (!latestInterim) {
+                    latestInterim = transcript
                 }
             }
-            if (capturedFinal.trim()) {
-                recognitionBufferRef.current = `${recognitionBufferRef.current} ${capturedFinal}`.trim()
-                recognitionInterimRef.current = ''
-            } else if (capturedInterim.trim()) {
-                recognitionInterimRef.current = capturedInterim.trim()
+            if (latestFinal) {
+                recognitionBufferRef.current = appendTranscriptChunk(
+                    recognitionBufferRef.current,
+                    latestFinal
+                )
             }
+            recognitionInterimRef.current = latestInterim
+            recognitionLiveRef.current = mergeTranscriptWithOverlap(
+                recognitionBufferRef.current,
+                recognitionInterimRef.current
+            )
         }
 
         recognition.onerror = () => {
@@ -442,16 +551,22 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
             recognitionRef.current = null
             recognitionBufferRef.current = ''
             recognitionInterimRef.current = ''
+            recognitionLiveRef.current = ''
         }
 
         recognition.onend = () => {
-            const combined = `${recognitionBufferRef.current} ${recognitionInterimRef.current}`.trim()
+            const merged = recognitionLiveRef.current || mergeTranscriptWithOverlap(
+                recognitionBufferRef.current,
+                recognitionInterimRef.current
+            )
+            const combined = removeConsecutiveDuplicateWords(merged)
             if (combined) {
                 const textToAppend = slashPrefixEnabled ? `/${combined}` : combined
-                setNoteContent((prev) => (prev ? `${prev}\n${textToAppend}` : textToAppend))
+                insertGeneratedTextAtCursor(textToAppend)
             }
             recognitionBufferRef.current = ''
             recognitionInterimRef.current = ''
+            recognitionLiveRef.current = ''
             setIsListening(false)
             recognitionRef.current = null
         }
@@ -462,9 +577,13 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
     }
 
     const stopSTT = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop()
-        }
+        if (stopTimerRef.current) clearTimeout(stopTimerRef.current)
+        stopTimerRef.current = setTimeout(() => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop()
+            }
+            stopTimerRef.current = null
+        }, 180)
     }
 
     const setSttLanguage = (lang: STTLang) => {
@@ -474,6 +593,35 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
 
     const toggleSlashPrefix = () => {
         setSlashPrefixEnabled((prev) => !prev)
+    }
+
+    const insertGeneratedTextAtCursor = (text: string) => {
+        const textarea = noteTextareaRef.current
+        if (!textarea) {
+            setNoteContent((prev) => (prev ? `${prev}\n${text}` : text))
+            return
+        }
+
+        const start = textarea.selectionStart ?? noteContent.length
+        const end = textarea.selectionEnd ?? start
+
+        setNoteContent((prev) => {
+            const before = prev.slice(0, start)
+            const after = prev.slice(end)
+            const generatedText = before && !before.endsWith('\n') ? `\n${text}` : text
+            const nextValue = `${before}${generatedText}${after}`
+            const nextCaret = before.length + generatedText.length
+
+            requestAnimationFrame(() => {
+                const nextTextarea = noteTextareaRef.current
+                if (!nextTextarea) return
+                if (document.activeElement === nextTextarea) {
+                    nextTextarea.setSelectionRange(nextCaret, nextCaret)
+                }
+            })
+
+            return nextValue
+        })
     }
 
     return (
@@ -490,7 +638,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                             )}
                         </div>
                         <button
-                            onClick={onClose}
+                            onClick={handleCloseModal}
                             className="p-2 hover:bg-[var(--border)] rounded-full transition-colors flex-shrink-0"
                         >
                             <X size={22} className="text-[var(--foreground-muted)]" />
@@ -534,7 +682,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                             </button>
 
                             <button
-                                onClick={() => setShowNotes(!showNotes)}
+                                onClick={handleToggleNotes}
                                 className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 rounded-xl font-semibold transition-colors border text-sm ${showNotes
                                     ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]/50'
                                     : 'bg-[var(--background-subtle)] text-[var(--accent)] hover:bg-[var(--accent-light)] border-[var(--border)]'
@@ -565,10 +713,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                                 noteLoading={noteLoading}
                                 noteContent={noteContent}
                                 setNoteContent={setNoteContent}
-                                noteSaving={noteSaving}
-                                noteSaved={noteSaved}
-                                saveNote={saveNote}
-                                closeNotes={() => setShowNotes(false)}
+                                closeNotes={handleCloseNotes}
                                 sttSupported={sttSupported}
                                 sttLang={sttLang}
                                 slashPrefixEnabled={slashPrefixEnabled}
@@ -578,6 +723,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                                 startSTT={startSTT}
                                 stopSTT={stopSTT}
                                 compact
+                                textareaRef={noteTextareaRef}
                             />
                         </div>
                     )}
@@ -591,10 +737,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                             noteLoading={noteLoading}
                             noteContent={noteContent}
                             setNoteContent={setNoteContent}
-                            noteSaving={noteSaving}
-                            noteSaved={noteSaved}
-                            saveNote={saveNote}
-                            closeNotes={() => setShowNotes(false)}
+                            closeNotes={handleCloseNotes}
                             sttSupported={sttSupported}
                             sttLang={sttLang}
                             slashPrefixEnabled={slashPrefixEnabled}
@@ -603,6 +746,7 @@ export default function VideoPlayerModal({ video, onClose, onComplete, openWithN
                             isListening={isListening}
                             startSTT={startSTT}
                             stopSTT={stopSTT}
+                            textareaRef={noteTextareaRef}
                         />
                     </div>
                 )}
